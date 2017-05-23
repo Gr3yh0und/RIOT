@@ -6,7 +6,6 @@
  * directory for more details.
  */
 
-
 /**
  * @ingroup     examples
  * @{
@@ -19,15 +18,19 @@
  * @}
  */
 
-
 #include <stdio.h>
 
-#include "shell.h"
 #include "msg.h"
 
+#ifdef RIOT_SHELL
+#include "shell.h"
+#endif
 
+#ifdef RIOT_WITH_TINYDTLS
+#include "dtls-server.h"
+#endif
 
-/*TinyDTLS WARNING check*/
+/* TinyDTLS WARNING check */
 #ifdef WITH_RIOT_SOCKETS
 #error TinyDTLS is configured for working with Sockets. Yet, this is non-socket
 #endif
@@ -35,10 +38,7 @@
 #define MAIN_QUEUE_SIZE     (8)
 static msg_t _main_msg_queue[MAIN_QUEUE_SIZE];
 
-/*
- * Altough the server and client cna be in a simple file.
- * Is more friendly to divide them
- */
+#ifdef RIOT_SHELL
 extern int udp_client_cmd(int argc, char **argv);
 extern int udp_server_cmd(int argc, char **argv);
 
@@ -47,19 +47,22 @@ static const shell_command_t shell_commands[] = {
     { "dtlss", "Start a DTLS server (with echo)", udp_server_cmd },
     { NULL, NULL, NULL }
 };
+#endif
 
 int main(void)
 {
     /* we need a message queue for the thread running the shell in order to
      * receive potentially fast incoming networking packets */
     msg_init_queue(_main_msg_queue, MAIN_QUEUE_SIZE);
-    puts("RIOT (Tiny)DTLS testing implementation");
+
+#ifdef RIOT_SHELL
+    start_server();
 
     /* start shell */
-    puts("All up, running the shell now");
     char line_buf[SHELL_DEFAULT_BUFSIZE];
     shell_run(shell_commands, line_buf, SHELL_DEFAULT_BUFSIZE);
+#endif
 
-    /* should be never reached */
+
     return 0;
 }
