@@ -31,21 +31,29 @@
 #include "xtimer.h"
 #include "msg.h"
 
-
 /* TinyDTLS */
+#ifdef RIOT_WITH_TINYDTLS
 #include "dtls.h"
 #include "dtls_debug.h"
 #include "tinydtls.h"
+#endif
 
 /* YaCoap */
+#ifdef RIOT_WITH_YACOAP
 #include "coap.h"
+#endif
 
-#define ENABLE_DEBUG  (0)
+#define ENABLE_DEBUG  (1)
 #include "debug.h"
 
-//#define DEFAULT_PORT 20220    /* DTLS default port  */
-#define DEFAULT_PORT 6666      /* First valid FEBx address  */
+#ifdef RIOT_WITH_TINYDTLS_PORT
+#define DEFAULT_PORT RIOT_WITH_TINYDTLS_PORT
+#else
+#define DEFAULT_PORT 6666
+#endif
 
+// TinyDTLS
+#ifdef RIOT_WITH_TINYDTLS
 /* TODO: MAke this local! */
 static dtls_context_t *dtls_context = NULL;
 
@@ -69,10 +77,13 @@ static const unsigned char ecdsa_pub_key_y[] = {
     0xD0, 0x43, 0xB1, 0xFB, 0x03, 0xE2, 0x2F, 0x4D,
     0x17, 0xDE, 0x43, 0xF9, 0xF9, 0xAD, 0xEE, 0x70
 };
+#endif
 
-/* microcoap variables */
+/* YaCoap */
+#ifdef RIOT_WITH_YACOAP
 extern void resource_setup(const coap_resource_t *resources);
 extern coap_resource_t resources[];
+#endif
 
 
 static gnrc_netreg_entry_t server = GNRC_NETREG_ENTRY_INIT_PID(
@@ -84,6 +95,7 @@ char _server_stack[THREAD_STACKSIZE_MAIN + THREAD_EXTRA_STACKSIZE_PRINTF];
 
 static kernel_pid_t _dtls_kernel_pid;
 
+#ifdef RIOT_WITH_TINYDTLS
 /**
  * @brief This care about getting messages and continue with the DTLS flights
  */
@@ -129,6 +141,7 @@ static void dtls_handle_read(dtls_context_t *ctx, gnrc_pktsnip_t *pkt)
  */
 static int read_from_peer(struct dtls_context_t *context, session_t *session, uint8 *data, size_t length) {
 
+#ifdef RIOT_WITH_YACOAP
 	coap_packet_t requestPacket, responsePacket;
 	uint8 responseBuffer[DTLS_MAX_BUF];
 	size_t responseBufferLength = sizeof(responseBuffer);
@@ -145,9 +158,11 @@ static int read_from_peer(struct dtls_context_t *context, session_t *session, ui
 			dtls_write(context, session, responseBuffer, responseBufferLength);
 		}
 	}
+#endif
 
 	return 0;
 }
+#endif
 
 /**
  * @brief This will try to transmit using only GNRC stack (non-socket).
@@ -206,6 +221,7 @@ static int gnrc_sending(char *addr_str, char *data, size_t data_len, unsigned sh
     return 1;
 }
 
+#ifdef RIOT_WITH_TINYDTLS
 /**
  * @brief We communicate with the other peer.
  */
@@ -324,7 +340,6 @@ static void init_dtls(void)
 #endif  /* DTLS_ECC */
     };
 
-
 #ifdef DTLS_PSK
     puts("Server support PSK");
 #endif
@@ -334,8 +349,10 @@ static void init_dtls(void)
 
     DEBUG("DBG-Server On\n");
 
+#ifdef RIOT_WITH_YACOAP
     // Initialise COAP resources
     resource_setup(resources);
+#endif
 
     /*
      * The context for the server is a little different from the client.
@@ -361,13 +378,9 @@ static void init_dtls(void)
         puts("Server was unable to generate DTLS Context!");
         exit(-1);
     }
-
-
-
 }
 
 /* NOTE: wrapper or trampoline ? (Syntax question) */
-
 void *dtls_server_wrapper(void *arg)
 {
     (void) arg; /* TODO: Remove? We don't have args at all (NULL) */
@@ -400,8 +413,9 @@ void *dtls_server_wrapper(void *arg)
 
     dtls_free_context(dtls_context);
 }
+#endif
 
-static void start_server(void)
+void start_server(void)
 {
     uint16_t port;
 
@@ -415,8 +429,10 @@ static void start_server(void)
         return;
     }
 
+#ifdef RIOT_WITH_TINYDTLS
     /*TESTING tinydtls*/
     dtls_init();
+#endif
 
     /* The server is initialized  */
     server.target.pid = thread_create(_server_stack, sizeof(_server_stack),
@@ -440,7 +456,9 @@ static void stop_server(void)
         return;
     }
 
+#ifdef RIOT_WITH_TINYDTLS
     dtls_free_context(dtls_context);
+#endif
 
     /* stop server */
     gnrc_netreg_unregister(GNRC_NETTYPE_UDP, &server);

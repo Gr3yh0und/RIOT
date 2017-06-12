@@ -30,7 +30,7 @@
 #include "timex.h"
 #include "xtimer.h"
 
-#define ENABLE_DEBUG  (1)
+#define ENABLE_DEBUG  (0)
 #include "debug.h"
 
 /* TinyDTLS */
@@ -61,7 +61,7 @@
 #endif /* DTLS_PSK */
 
 //#define DEFAULT_PORT 20220    /* DTLS default port  */
-#define DEFAULT_PORT 61618      /* First valid FEBx address  */
+#define DEFAULT_PORT 7777      /* First valid FEBx address  */
 
 #define CLIENT_PORT  DEFAULT_PORT + 1
 #define MAX_TIMES_TRY_TO_SEND 10
@@ -266,7 +266,7 @@ static int gnrc_sending(char *addr_str, char *data, size_t data_len )
      *          This issue appears in the FIT-Lab (m3 motes).
      *          In native, is not required.
      */
-    xtimer_usleep(500000);
+    //xtimer_usleep(500000);
 
     /* send packet */
     if (!gnrc_netapi_dispatch_send(GNRC_NETTYPE_UDP, GNRC_NETREG_DEMUX_CTX_ALL, ip)) {
@@ -502,7 +502,7 @@ static void client_send(char *addr_str, char *data, unsigned int delay)
 
 int udp_client_cmd(int argc, char **argv)
 {
-    uint32_t delay = 1000000;
+    uint32_t delay = 80000;
 
     if (argc < 3) {
         printf("usage: %s <addr> <data> [<delay in us>]\n", argv[0]);

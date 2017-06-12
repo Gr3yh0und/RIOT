@@ -28,6 +28,7 @@ USEMODULE += auto_init_gnrc_netif
 # Specify the mandatory networking modules for IPv6 and sUDP
 USEMODULE += gnrc_ipv6_router_default
 USEMODULE += gnrc_udp
+USEMODULE += gnrc_sock_udp
 
 # Add a routing protocol
 USEMODULE += gnrc_rpl
@@ -56,10 +57,17 @@ USEMODULE += ps
 CFLAGS += -DDEVELHELP
 
 # NOTE: Add the package for TinyDTLS
+CFLAGS += -DRIOT_WITH_TINYDTLS
 USEPKG += tinydtls
 
+# NOTE: Add the package for YaCoAP
+CFLAGS += -DRIOT_WITH_YACOAP
 USEPKG += yacoap
 
+# Switch between UDP Client and Server
+CFLAGS += -DWITH_CLIENT
+CFLAGS += -DWITH_CLIENT_PUT
+#CFLAGS += -DWITH_SERVER
 
 # Switch GPIO Output
 CFLAGS += -DGPIO_OUTPUT_ENABLE
@@ -79,7 +87,7 @@ CFLAGS += -DDTLS_PSK
 # WARNING: Sometimes the log leads to Stack pointer corrupted.
 #          The reason is not identified yet.
 #          If said issue appears, enable this line.
-#CFLAGS += -DNDEBUG
+CFLAGS += -DNDEBUG
 
 # NOTE: The configuration for socket or non-socket  communication in TinyDTLS.
 CFLAGS += -DWITH_RIOT_GNRC
