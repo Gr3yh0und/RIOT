@@ -30,6 +30,8 @@
 #include "timex.h"
 #include "xtimer.h"
 
+#include "measurement.h"
+
 #define ENABLE_DEBUG  (0)
 #include "debug.h"
 
@@ -308,7 +310,9 @@ static void try_send(struct dtls_context_t *ctx, session_t *dst)
 
     int res;
 
+    MEASUREMENT_DTLS_WRITE_ON;
     res = dtls_write(ctx, dst, (uint8_t *)client_payload, buflen);
+    MEASUREMENT_DTLS_WRITE_OFF;
 
     if (res >= 0) {
         memmove(client_payload, client_payload + res, buflen - res);

@@ -28,6 +28,8 @@
 #include "cc2538_rf_netdev.h"
 #include "cc2538_rf_internal.h"
 
+#include "../../../examples/coaps/measurement.h"
+
 #define ENABLE_DEBUG        (0)
 #include "debug.h"
 
@@ -255,6 +257,7 @@ static int _set(netdev_t *netdev, netopt_t opt, void *value, size_t value_len)
 
 static int _send(netdev_t *netdev, const struct iovec *vector, unsigned count)
 {
+	MEASUREMENT_TRANSMIT_ON;
     int pkt_len = 0;
 
     /* Flush TX FIFO once no transmission in progress */
@@ -272,6 +275,7 @@ static int _send(netdev_t *netdev, const struct iovec *vector, unsigned count)
         if (pkt_len > CC2538_RF_MAX_DATA_LEN) {
             DEBUG("cc2538_rf: packet too large (%u > %u)\n",
                   pkt_len, CC2538_RF_MAX_DATA_LEN);
+            MEASUREMENT_TRANSMIT_OFF;
             return -EOVERFLOW;
         }
 
@@ -285,16 +289,21 @@ static int _send(netdev_t *netdev, const struct iovec *vector, unsigned count)
     /* Set first byte of TX FIFO to the packet length */
     rfcore_poke_tx_fifo(0, pkt_len + CC2538_AUTOCRC_LEN);
 
+    MEASUREMENT_TX_ON;
     RFCORE_SFR_RFST = ISTXON;
 
     /* Wait for transmission to complete */
     RFCORE_WAIT_UNTIL(RFCORE->XREG_FSMSTAT1bits.TX_ACTIVE == 0);
+
+    MEASUREMENT_TX_OFF;
+    MEASUREMENT_TRANSMIT_OFF;
 
     return pkt_len;
 }
 
 static int _recv(netdev_t *netdev, void *buf, size_t len, void *info)
 {
+	MEASUREMENT_RECEIVING_ON;
     size_t pkt_len;
 
     if (buf == NULL) {
@@ -304,6 +313,7 @@ static int _recv(netdev_t *netdev, void *buf, size_t len, void *info)
         /* Make sure pkt_len is sane */
         if (pkt_len > CC2538_RF_MAX_DATA_LEN) {
             RFCORE_SFR_RFST = ISFLUSHRX;
+            MEASUREMENT_RECEIVING_OFF;
             return -EOVERFLOW;
         }
 
@@ -311,6 +321,7 @@ static int _recv(netdev_t *netdev, void *buf, size_t len, void *info)
         if (!(rfcore_peek_rx_fifo(pkt_len) & 0x80)) {
             /* CRC failed; discard packet */
             RFCORE_SFR_RFST = ISFLUSHRX;
+            MEASUREMENT_RECEIVING_OFF;
             return -ENODATA;
         }
 
@@ -319,6 +330,7 @@ static int _recv(netdev_t *netdev, void *buf, size_t len, void *info)
             RFCORE_SFR_RFST = ISFLUSHRX;
         }
 
+        MEASUREMENT_RECEIVING_OFF;
         return pkt_len - IEEE802154_FCS_LEN;
     }
     else {
@@ -360,6 +372,8 @@ static int _recv(netdev_t *netdev, void *buf, size_t len, void *info)
     }
 
     RFCORE_SFR_RFST = ISFLUSHRX;
+
+    MEASUREMENT_RECEIVING_OFF;
 
     return pkt_len;
 }

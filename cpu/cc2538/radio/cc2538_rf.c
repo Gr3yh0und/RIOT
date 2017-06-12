@@ -25,6 +25,8 @@
 #include "cc2538_rf.h"
 #include "cc2538_rf_netdev.h"
 
+#include "../../../examples/coaps/measurement.h"
+
 #define ENABLE_DEBUG    (0)
 #include "debug.h"
 
@@ -64,22 +66,26 @@ static const init_pair_t init_table[] = {
 
 bool cc2538_channel_clear(void)
 {
+	MEASUREMENT_CCA_ON;
     if (RFCORE->XREG_FSMSTAT0bits.FSM_FFCTRL_STATE == FSM_STATE_IDLE) {
         bool result;
         cc2538_on();
         RFCORE_WAIT_UNTIL(RFCORE->XREG_RSSISTATbits.RSSI_VALID);
         result = BOOLEAN(RFCORE->XREG_FSMSTAT1bits.CCA);
         cc2538_off();
+        MEASUREMENT_CCA_OFF;
         return result;
     }
     else {
         RFCORE_WAIT_UNTIL(RFCORE->XREG_RSSISTATbits.RSSI_VALID);
+        MEASUREMENT_CCA_OFF;
         return BOOLEAN(RFCORE->XREG_FSMSTAT1bits.CCA);
     }
 }
 
 void cc2538_init(void)
 {
+	MEASUREMENT_INIT_ON;
     const init_pair_t *pair;
 
     for (pair = init_table; pair->reg_addr != NULL; pair++) {
@@ -94,7 +100,7 @@ void cc2538_init(void)
     /* Select the observable signals (maximum of three) */
     RFCORE_XREG_RFC_OBS_CTRL0 = tx_active;
     RFCORE_XREG_RFC_OBS_CTRL1 = rx_active;
-    RFCORE_XREG_RFC_OBS_CTRL2 = ffctrl_fifo;
+    RFCORE_XREG_RFC_OBS_CTRL2 = sampled_cca;
 
     /* Select output pins for the three observable signals */
 #ifdef BOARD_OPENMOTE_CC2538
@@ -108,9 +114,9 @@ void cc2538_init(void)
     CCTEST_OBSSEL7 = OBSSEL_EN | rfc_obs_sig2; /* PC7 = GREEN_LED      */
 #else
     /* Assume BOARD_CC2538DK (or similar). */
-    CCTEST_OBSSEL0 = OBSSEL_EN | rfc_obs_sig0; /* PC0 = LED_1 (red)    */
-    CCTEST_OBSSEL1 = OBSSEL_EN | rfc_obs_sig1; /* PC1 = LED_2 (yellow) */
-    CCTEST_OBSSEL2 = OBSSEL_EN | rfc_obs_sig2; /* PC2 = LED_3 (green)  */
+    CCTEST_OBSSEL0 = 0;                        /* PC0 = LED_1 (red)    */
+    CCTEST_OBSSEL1 = 0;                        /* PC1 = LED_2 (yellow) */
+    CCTEST_OBSSEL2 = 0;                        /* PC2 = LED_3 (green)  */
     CCTEST_OBSSEL3 = 0;                        /* PC3 = LED_4 (red)    */
     CCTEST_OBSSEL4 = 0;                        /* PC4 = BTN_L          */
     CCTEST_OBSSEL5 = 0;                        /* PC5 = BTN_R          */
@@ -139,6 +145,7 @@ void cc2538_init(void)
     /* Disable/filter l2 Acks */
     RFCORE_XREG_FRMFILT1 &= ~CC2538_ACCEPT_FT_2_ACK;
     cc2538_on();
+    MEASUREMENT_INIT_OFF;
 }
 
 bool cc2538_is_on(void)
@@ -158,10 +165,13 @@ void cc2538_off(void)
     if (RFCORE_XREG_RXENABLE != 0) {
         RFCORE_SFR_RFST = ISRFOFF;
     }
+    MEASUREMENT_RX_OFF;
+    MEASUREMENT_TX_OFF;
 }
 
 bool cc2538_on(void)
 {
+	MEASUREMENT_RX_ON;
     /* Flush RX FIFO */
     RFCORE_SFR_RFST = ISFLUSHRX;
 

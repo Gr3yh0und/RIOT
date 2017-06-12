@@ -30,6 +30,7 @@
 #include "timex.h"
 #include "xtimer.h"
 #include "msg.h"
+#include "measurement.h"
 
 /* TinyDTLS */
 #ifdef RIOT_WITH_TINYDTLS
@@ -155,7 +156,9 @@ static int read_from_peer(struct dtls_context_t *context, session_t *session, ui
 		if ((coap_build(&responsePacket, responseBuffer, &responseBufferLength)) < COAP_ERR)
 		{
 			// Send response packet decrypted over DTLS
+			MEASUREMENT_DTLS_WRITE_ON;
 			dtls_write(context, session, responseBuffer, responseBufferLength);
+			MEASUREMENT_DTLS_WRITE_OFF;
 		}
 	}
 #endif

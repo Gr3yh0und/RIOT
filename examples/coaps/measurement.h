@@ -61,6 +61,15 @@ void measurement_init_gpio(void);
 #define KEY_SELECT_MASK M_GPIO_PIN_MASK(3)
 #define KEY_MASK_C_ALL  KEY_LEFT_MASK + KEY_RIGHT_MASK + KEY_UP_MASK + KEY_DOWN_MASK
 
+// undefine possible already existing LED defines
+#undef LED0_ON
+#undef LED0_OFF
+#undef LED1_ON
+#undef LED1_OFF
+#undef LED2_ON
+#undef LED2_OFF
+#undef LED3_ON
+#undef LED3_OFF
 
 // Enable or disable GPIO outputs
 #if GPIO_OUTPUT_ENABLE
