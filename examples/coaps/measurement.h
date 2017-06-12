@@ -42,11 +42,11 @@ void measurement_init_gpio(void);
 #define M_HWREG(x)                          (*((volatile uint32_t *)(x)))
 #define M_GPIO_PIN_MASK(n)                 	( 1 << (n) )
 #define M_GPIO_PORT_TO_DEV(port)           	( M_GPIO_A_BASE + ((port) << 12) )
-#define M_GPIO_CONTROL_SOFTWARE(port, pin)  ( M_HWREG(M_GPIO_PORT_TO_DEV(port) + M_GPIO_AFSEL) &= ~pin )
-#define M_GPIO_SET_OUTPUT(port, pin)       	( M_HWREG(M_GPIO_PORT_TO_DEV(port) + M_GPIO_DIR)   |=  pin )
-#define M_GPIO_SET_INPUT(port, pin)        	( M_HWREG(M_GPIO_PORT_TO_DEV(port) + M_GPIO_DIR)   &= ~pin )
-#define M_GPIO_SET_PIN(port, pin)          	( M_HWREG(M_GPIO_PORT_TO_DEV(port) + M_GPIO_DATA   +  (pin << 2)) = 0xFF )
-#define M_GPIO_CLEAR_PIN(port, pin)        	( M_HWREG(M_GPIO_PORT_TO_DEV(port) + M_GPIO_DATA   +  (pin << 2)) = 0x00 )
+#define M_GPIO_CONTROL_SOFTWARE(port, pin)  ( M_HWREG(port + M_GPIO_AFSEL) &= ~pin )
+#define M_GPIO_SET_OUTPUT(port, pin)       	( M_HWREG(port + M_GPIO_DIR)   |=  pin )
+#define M_GPIO_SET_INPUT(port, pin)        	( M_HWREG(port + M_GPIO_DIR)   &= ~pin )
+#define M_GPIO_SET_PIN(port, pin)          	( M_HWREG(port + M_GPIO_DATA   +  (pin << 2)) = 0xFF )
+#define M_GPIO_CLEAR_PIN(port, pin)        	( M_HWREG(port + M_GPIO_DATA   +  (pin << 2)) = 0x00 )
 
 // bit masks for leds and keys
 #define LED0_MASK       M_GPIO_PIN_MASK(0) 	// red
@@ -110,7 +110,6 @@ void measurement_init_gpio(void);
 #define KEY_SELECT_OFF
 #endif
 
-
 // #1: Define RF measurements
 #if THESIS_MEASUREMENT_RF
 #define MEASUREMENT_DTLS_WRITE_ON   LED0_ON
@@ -131,25 +130,6 @@ void measurement_init_gpio(void);
 #define MEASUREMENT_TRANSMIT_OFF    KEY_DOWN_OFF
 #define MEASUREMENT_READ_ON         KEY_SELECT_ON
 #define MEASUREMENT_READ_OFF        KEY_SELECT_OFF
-#else
-#define MEASUREMENT_DTLS_WRITE_ON
-#define MEASUREMENT_DTLS_WRITE_OFF
-#define MEASUREMENT_RX_ON
-#define MEASUREMENT_RX_OFF
-#define MEASUREMENT_CCA_ON
-#define MEASUREMENT_CCA_OFF
-#define MEASUREMENT_TX_ON
-#define MEASUREMENT_TX_OFF
-#define MEASUREMENT_INIT_ON
-#define MEASUREMENT_INIT_OFF
-#define MEASUREMENT_PREPARE_ON
-#define MEASUREMENT_PREPARE_OFF
-#define MEASUREMENT_RECEIVING_ON
-#define MEASUREMENT_RECEIVING_OFF
-#define MEASUREMENT_TRANSMIT_ON
-#define MEASUREMENT_TRANSMIT_OFF
-#define MEASUREMENT_READ_ON
-#define MEASUREMENT_READ_OFF
 #endif
 
 #ifdef __cplusplus
