@@ -21,6 +21,7 @@
 #include <stdio.h>
 
 #include "msg.h"
+#include "measurement.h"
 
 #ifdef RIOT_SHELL
 #include "shell.h"
@@ -55,9 +56,18 @@ int main(void)
      * receive potentially fast incoming networking packets */
     msg_init_queue(_main_msg_queue, MAIN_QUEUE_SIZE);
 
-#ifdef RIOT_SHELL
-    start_server();
+#ifdef GPIO_OUTPUT_ENABLE
+    measurement_init_gpio();
+#endif
 
+#ifdef WITH_SERVER
+    start_server();
+#endif
+
+#ifdef WITH_CLIENT
+#endif
+
+#ifdef RIOT_SHELL
     /* start shell */
     char line_buf[SHELL_DEFAULT_BUFSIZE];
     shell_run(shell_commands, line_buf, SHELL_DEFAULT_BUFSIZE);

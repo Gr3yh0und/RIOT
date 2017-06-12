@@ -60,6 +60,11 @@ USEPKG += tinydtls
 
 USEPKG += yacoap
 
+
+# Switch GPIO Output
+CFLAGS += -DGPIO_OUTPUT_ENABLE
+CFLAGS += -DTHESIS_MEASUREMENT_RF
+
 # NOTE: Those are taken from TinyDTLS. As the original Makefiles are
 #      overwitten is a good idea to preserve them here.
 CFLAGS += -DDTLSv12 -DWITH_SHA256
