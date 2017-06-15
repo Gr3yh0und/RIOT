@@ -49,3 +49,5 @@ Makefile.local
 __pycache__
 
 burn\.seg
+
+examples/coaps/build\.old
