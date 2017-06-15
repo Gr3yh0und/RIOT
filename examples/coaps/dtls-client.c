@@ -289,6 +289,7 @@ static int gnrc_sending(char *addr_str, char *data, size_t data_len )
 static int read_from_peer(struct dtls_context_t *ctx,
                session_t *session, uint8 *data, size_t len)
 {
+	MEASUREMENT_DTLS_READ_ON;
     /* Linux and Contiki version are exactly the same. */
     (void) session;
     (void) ctx;
@@ -298,6 +299,7 @@ static int read_from_peer(struct dtls_context_t *ctx,
         printf("%c", data[i]);
     printf(" \n\n\n");
     return 0;
+    MEASUREMENT_DTLS_READ_OFF;
 }
 
 /**
@@ -414,6 +416,7 @@ static void init_dtls(session_t *dst, char *addr_str)
  */
 static void client_send(char *addr_str, char *data, unsigned int delay)
 {
+	MEASUREMENT_DTLS_TOTAL_ON;
     static int8_t iWatch;
     static session_t dst;
     static int connected = 0;
@@ -502,6 +505,7 @@ static void client_send(char *addr_str, char *data, unsigned int delay)
 
     /* Permanent or not permanent? */
     DEBUG("DTLS-Client: DTLS session finished\n");
+    MEASUREMENT_DTLS_TOTAL_OFF;
 }
 
 int udp_client_cmd(int argc, char **argv)
