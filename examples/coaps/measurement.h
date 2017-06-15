@@ -15,18 +15,33 @@
 #endif
 
 // Signal naming oscilloscope for documentation purposes only
-// D0 = LED 0		= PC0
-// D1 = LED 1		= PC1
-// D2 = LED 2		= PC2
-// D3 = LED 3		= PC3
-// D4 = KEY LEFT	= PC4
-// D5 = KEY RIGHT	= PC5
-// D6 = KEY UP		= PC6
-// D7 = KEY DOWN	= PC7
-// D8 = KEY SELECT	= PA3
+// CC2538DK
+// D0  = LED 0		= PC0
+// D1  = LED 1		= PC1
+// D2  = LED 2		= PC2
+// D3  = LED 3		= PC3
+// D4  = KEY LEFT	= PC4
+// D5  = KEY RIGHT	= PC5
+// D6  = KEY UP		= PC6
+// D7  = KEY DOWN	= PC7
+// D8  = KEY SELECT	= PA3
+// D9  = LCD_RESET  = PB3
+// D10 = LCD_MODE   = PB2
+// D11 = LCD_CS     = PB5
+
+// OpenMote
+// D0 = DIO1 = PD2
+// D1 = DIO2 = PD1
+// D2 = DIO3 = PD0
+// D3 = DIO4 = PA2
+// D4 = DIO5 = PA4
+// D5 = DIO6 = PA5
+// D6 = DIO7 = PA3
 
  // configures GPIO as software controlled outputs
 void measurement_init_gpio(void);
+
+#ifndef HARDWARE_OPENMOTE
 
 // Basics for all OS platforms
 // Addresses
@@ -48,7 +63,7 @@ void measurement_init_gpio(void);
 #define M_GPIO_SET_PIN(port, pin)          	( M_HWREG(port + M_GPIO_DATA   +  (pin << 2)) = 0xFF )
 #define M_GPIO_CLEAR_PIN(port, pin)        	( M_HWREG(port + M_GPIO_DATA   +  (pin << 2)) = 0x00 )
 
-// bit masks for leds and keys
+// bit masks for GPIOs
 #define LED0_MASK       M_GPIO_PIN_MASK(0) 	// red
 #define LED1_MASK       M_GPIO_PIN_MASK(1) 	// yellow
 #define LED2_MASK       M_GPIO_PIN_MASK(2) 	// green
@@ -60,6 +75,10 @@ void measurement_init_gpio(void);
 #define KEY_DOWN_MASK   M_GPIO_PIN_MASK(7)
 #define KEY_SELECT_MASK M_GPIO_PIN_MASK(3)
 #define KEY_MASK_C_ALL  KEY_LEFT_MASK + KEY_RIGHT_MASK + KEY_UP_MASK + KEY_DOWN_MASK
+#define LCD_MODE_MASK   M_GPIO_PIN_MASK(2)
+#define LCD_RESET_MASK  M_GPIO_PIN_MASK(3)
+#define LCD_CS_MASK     M_GPIO_PIN_MASK(5)
+#define LCD_MASK_ALL    LCD_RESET_MASK + LCD_MODE_MASK + LCD_CS_MASK
 
 // undefine possible already existing LED defines
 #undef LED0_ON
@@ -70,6 +89,8 @@ void measurement_init_gpio(void);
 #undef LED2_OFF
 #undef LED3_ON
 #undef LED3_OFF
+
+#endif
 
 // Enable or disable GPIO outputs
 #if GPIO_OUTPUT_ENABLE
@@ -91,7 +112,15 @@ void measurement_init_gpio(void);
 #define KEY_DOWN_OFF    M_GPIO_CLEAR_PIN(M_GPIO_C_BASE, KEY_DOWN_MASK)
 #define KEY_SELECT_ON   M_GPIO_SET_PIN(M_GPIO_A_BASE, KEY_SELECT_MASK)
 #define KEY_SELECT_OFF  M_GPIO_CLEAR_PIN(M_GPIO_A_BASE, KEY_SELECT_MASK)
+#define LCD_RESET_ON    M_GPIO_SET_PIN(M_GPIO_B_BASE, LCD_RESET_MASK)
+#define LCD_RESET_OFF   M_GPIO_CLEAR_PIN(M_GPIO_B_BASE, LCD_RESET_MASK)
+#define LCD_MODE_ON     M_GPIO_SET_PIN(M_GPIO_B_BASE, LCD_MODE_MASK)
+#define LCD_MODE_OFF    M_GPIO_CLEAR_PIN(M_GPIO_B_BASE, LCD_MODE_MASK)
+#define LCD_CS_ON       M_GPIO_SET_PIN(M_GPIO_B_BASE, LCD_CS_MASK)
+#define LCD_CS_OFF      M_GPIO_CLEAR_PIN(M_GPIO_B_BASE, LCD_CS_MASK)
 #else
+#define LED0_ON
+#define LED0_OFF
 #define LED1_ON
 #define LED1_OFF
 #define LED2_ON
@@ -108,20 +137,27 @@ void measurement_init_gpio(void);
 #define KEY_DOWN_OFF
 #define KEY_SELECT_ON
 #define KEY_SELECT_OFF
+#define LCD_RESET_ON
+#define LCD_RESET_OFF
+#define LCD_MODE_ON
+#define LCD_MODE_OFF
+#define LCD_CS_ON
+#define LCD_CS_OFF
 #endif
 
 // #1: Define RF measurements
-#if THESIS_MEASUREMENT_RF
-#define MEASUREMENT_DTLS_WRITE_ON   LED0_ON
-#define MEASUREMENT_DTLS_WRITE_OFF  LED0_OFF
-#define MEASUREMENT_RX_ON           LED1_ON
-#define MEASUREMENT_RX_OFF          LED1_OFF
-#define MEASUREMENT_CCA_ON 	        LED2_ON
-#define MEASUREMENT_CCA_OFF         LED2_OFF
-#define MEASUREMENT_TX_ON           LED3_ON
-#define MEASUREMENT_TX_OFF          LED3_OFF
-#define MEASUREMENT_INIT_ON         KEY_LEFT_ON
-#define MEASUREMENT_INIT_OFF        KEY_LEFT_OFF
+#define MEASUREMENT_DTLS_TOTAL_ON   LED3_ON
+#define MEASUREMENT_DTLS_TOTAL_OFF  LED3_OFF
+#define MEASUREMENT_DTLS_WRITE_ON   KEY_LEFT_ON
+#define MEASUREMENT_DTLS_WRITE_OFF  KEY_LEFT_OFF
+#define MEASUREMENT_DTLS_READ_ON    LCD_RESET_ON
+#define MEASUREMENT_DTLS_READ_OFF   LCD_RESET_OFF
+#define MEASUREMENT_RX_ON           LED0_ON
+#define MEASUREMENT_RX_OFF          LED0_OFF
+#define MEASUREMENT_CCA_ON 	        LED1_ON
+#define MEASUREMENT_CCA_OFF         LED1_OFF
+#define MEASUREMENT_TX_ON           LED2_ON
+#define MEASUREMENT_TX_OFF          LED2_OFF
 #define MEASUREMENT_PREPARE_ON      KEY_RIGHT_ON
 #define MEASUREMENT_PREPARE_OFF     KEY_RIGHT_OFF
 #define MEASUREMENT_RECEIVING_ON    KEY_UP_ON
@@ -130,7 +166,10 @@ void measurement_init_gpio(void);
 #define MEASUREMENT_TRANSMIT_OFF    KEY_DOWN_OFF
 #define MEASUREMENT_READ_ON         KEY_SELECT_ON
 #define MEASUREMENT_READ_OFF        KEY_SELECT_OFF
-#endif
+#define MEASUREMENT_DTLS_WRITE_PACKET_ON LCD_MODE_ON
+#define MEASUREMENT_DTLS_WRITE_PACKET_OFF LCD_MODE_OFF
+
+
 
 #ifdef __cplusplus
 } // end extern "C"

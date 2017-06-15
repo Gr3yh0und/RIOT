@@ -289,6 +289,7 @@ static int _send(netdev_t *netdev, const struct iovec *vector, unsigned count)
     /* Set first byte of TX FIFO to the packet length */
     rfcore_poke_tx_fifo(0, pkt_len + CC2538_AUTOCRC_LEN);
 
+    MEASUREMENT_RX_OFF;
     MEASUREMENT_TX_ON;
     RFCORE_SFR_RFST = ISTXON;
 
@@ -296,6 +297,7 @@ static int _send(netdev_t *netdev, const struct iovec *vector, unsigned count)
     RFCORE_WAIT_UNTIL(RFCORE->XREG_FSMSTAT1bits.TX_ACTIVE == 0);
 
     MEASUREMENT_TX_OFF;
+    MEASUREMENT_RX_ON;
     MEASUREMENT_TRANSMIT_OFF;
 
     return pkt_len;

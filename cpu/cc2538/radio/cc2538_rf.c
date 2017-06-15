@@ -85,7 +85,6 @@ bool cc2538_channel_clear(void)
 
 void cc2538_init(void)
 {
-	MEASUREMENT_INIT_ON;
     const init_pair_t *pair;
 
     for (pair = init_table; pair->reg_addr != NULL; pair++) {
@@ -145,7 +144,6 @@ void cc2538_init(void)
     /* Disable/filter l2 Acks */
     RFCORE_XREG_FRMFILT1 &= ~CC2538_ACCEPT_FT_2_ACK;
     cc2538_on();
-    MEASUREMENT_INIT_OFF;
 }
 
 bool cc2538_is_on(void)
