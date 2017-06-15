@@ -19,8 +19,9 @@
  */
 
 #include <stdio.h>
-
 #include "msg.h"
+#include "xtimer.h"
+#include "dtls-client.h"
 #include "measurement.h"
 
 #ifdef RIOT_SHELL
@@ -29,11 +30,6 @@
 
 #ifdef RIOT_WITH_TINYDTLS
 #include "dtls-server.h"
-#endif
-
-/* TinyDTLS WARNING check */
-#ifdef WITH_RIOT_SOCKETS
-#error TinyDTLS is configured for working with Sockets. Yet, this is non-socket
 #endif
 
 #define MAIN_QUEUE_SIZE     (8)
@@ -50,11 +46,25 @@ static const shell_command_t shell_commands[] = {
 };
 #endif
 
+/* import "ifconfig" shell command, used for printing addresses */
+extern int _netif_config(int argc, char **argv);
+
 int main(void)
 {
     /* we need a message queue for the thread running the shell in order to
      * receive potentially fast incoming networking packets */
     msg_init_queue(_main_msg_queue, MAIN_QUEUE_SIZE);
+
+    /* print network addresses */
+    xtimer_sleep(1);
+	puts("Configured network interfaces:");
+	_netif_config(0, NULL);
+
+#ifdef RIOT_SHELL
+    /* start shell */
+    char line_buf[SHELL_DEFAULT_BUFSIZE];
+    shell_run(shell_commands, line_buf, SHELL_DEFAULT_BUFSIZE);
+#endif
 
 #ifdef GPIO_OUTPUT_ENABLE
     measurement_init_gpio();
@@ -64,15 +74,10 @@ int main(void)
     start_server();
 #endif
 
-#ifdef WITH_CLIENT
+#if WITH_CLIENT
+    xtimer_sleep(1);
+    start_client();
 #endif
-
-#ifdef RIOT_SHELL
-    /* start shell */
-    char line_buf[SHELL_DEFAULT_BUFSIZE];
-    shell_run(shell_commands, line_buf, SHELL_DEFAULT_BUFSIZE);
-#endif
-
 
     return 0;
 }

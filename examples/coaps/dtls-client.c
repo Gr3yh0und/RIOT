@@ -51,18 +51,17 @@
 #endif /* __GNUC__ */
 
 #ifdef DTLS_PSK
-
 #define PSK_DEFAULT_IDENTITY "Client_identity"
 #define PSK_DEFAULT_KEY      "secretPSK"
 #define PSK_OPTIONS          "i:k:"
-
-/* Max size for PSK lowered for embedded devices */
 #define PSK_ID_MAXLEN 32
 #define PSK_MAXLEN 32
-
+static unsigned char psk_id[PSK_ID_MAXLEN] = PSK_DEFAULT_IDENTITY;
+static size_t psk_id_length = sizeof(PSK_DEFAULT_IDENTITY) - 1;
+static unsigned char psk_key[PSK_MAXLEN] = PSK_DEFAULT_KEY;
+static size_t psk_key_length = sizeof(PSK_DEFAULT_KEY) - 1;
 #endif /* DTLS_PSK */
 
-//#define DEFAULT_PORT 20220    /* DTLS default port  */
 #define DEFAULT_PORT 7777      /* First valid FEBx address  */
 
 #define CLIENT_PORT  DEFAULT_PORT + 1
@@ -81,24 +80,13 @@ static void dtls_handle_read(dtls_context_t *ctx, gnrc_pktsnip_t *pkt)
 {
 
     static session_t session;
-
-    /*
-     * NOTE: GNRC (Non-socket) issue: we need to modify the current
-     * DTLS Context for the IPv6 src (and in a future the port src).
-     */
-
-    /* Taken from the tftp server example */
     char addr_str[IPV6_ADDR_MAX_STR_LEN];
     gnrc_pktsnip_t *tmp2;
 
     tmp2 = gnrc_pktsnip_search_type(pkt, GNRC_NETTYPE_IPV6);
     ipv6_hdr_t *hdr = (ipv6_hdr_t *)tmp2->data;
-
     ipv6_addr_to_str(addr_str, &hdr->src, sizeof(addr_str));
 
-    /*
-       *TODO: More testings with TinyDTLS is neccesary, but seem this is safe.
-     */
     tmp2 = gnrc_pktsnip_search_type(pkt, GNRC_NETTYPE_UDP);
     udp_hdr_t *udp = (udp_hdr_t *)tmp2->data;
 
@@ -111,15 +99,9 @@ static void dtls_handle_read(dtls_context_t *ctx, gnrc_pktsnip_t *pkt)
     ipv6_addr_from_str(&session.addr, addr_str);
 
     dtls_handle_message(ctx, &session, pkt->data, (unsigned int)pkt->size);
-
 }
 
 #ifdef DTLS_PSK
-static unsigned char psk_id[PSK_ID_MAXLEN] = PSK_DEFAULT_IDENTITY;
-static size_t psk_id_length = sizeof(PSK_DEFAULT_IDENTITY) - 1;
-static unsigned char psk_key[PSK_MAXLEN] = PSK_DEFAULT_KEY;
-static size_t psk_key_length = sizeof(PSK_DEFAULT_KEY) - 1;
-
 /**
  * This function is the "key store" for tinyDTLS. It is called to
  * retrieve a key for the given identity within this particular
@@ -131,20 +113,12 @@ static int peer_get_psk_info(struct dtls_context_t *ctx UNUSED_PARAM,
                         const unsigned char *id, size_t id_len,
                         unsigned char *result, size_t result_length)
 {
-
     switch (type) {
         case DTLS_PSK_IDENTITY:
-            /* Removed due probably in the motes is useless
-               if (id_len) {
-               dtls_debug("got psk_identity_hint: '%.*s'\n", id_len, id);
-               }
-             */
-
             if (result_length < psk_id_length) {
                 dtls_warn("cannot set psk_identity -- buffer too small\n");
                 return dtls_alert_fatal_create(DTLS_ALERT_INTERNAL_ERROR);
             }
-
             memcpy(result, psk_id, psk_id_length);
             return psk_id_length;
         case DTLS_PSK_KEY:
@@ -233,16 +207,19 @@ static int read_from_peer(struct dtls_context_t *ctx,
                session_t *session, uint8 *data, size_t len)
 {
 	MEASUREMENT_DTLS_READ_ON;
-    /* Linux and Contiki version are exactly the same. */
+
     (void) session;
     (void) ctx;
     size_t i;
-    printf("\n\n Echo received: ");
+
+    printf("Echo received: ");
     for (i = 0; i < len; i++)
         printf("%c", data[i]);
-    printf(" \n\n\n");
-    return 0;
+    printf("\n");
+
     MEASUREMENT_DTLS_READ_OFF;
+
+    return 0;
 }
 
 /**
@@ -252,7 +229,6 @@ static int read_from_peer(struct dtls_context_t *ctx,
  */
 static void try_send(struct dtls_context_t *ctx, session_t *dst)
 {
-
     int res;
 
     MEASUREMENT_DTLS_WRITE_ON;
@@ -309,10 +285,6 @@ static void init_dtls(session_t *dst, char *addr_str)
         .get_psk_info = peer_get_psk_info,
 #endif  /* DTLS_PSK */
     };
-
-#ifdef DTLS_PSK
-    puts("Client support PSK");
-#endif
 
     DEBUG("DBG-Client: Debug ON");
     /*
@@ -413,6 +385,7 @@ static void client_send(char *addr_str, char *data, unsigned int delay)
         }
         else {
             /*TODO: must happens always or only when connected?*/
+        	puts("Trying to send...");
             try_send(dtls_context, &dst);
         }
 
@@ -443,9 +416,12 @@ static void client_send(char *addr_str, char *data, unsigned int delay)
     MEASUREMENT_DTLS_TOTAL_OFF;
 }
 
+/**
+ * Command which gets executed on the shell
+ */
 int udp_client_cmd(int argc, char **argv)
 {
-    uint32_t delay = 80000;
+    uint32_t delay = 100000;
 
     if (argc < 3) {
         printf("usage: %s <addr> <data> [<delay in us>]\n", argv[0]);
@@ -455,7 +431,19 @@ int udp_client_cmd(int argc, char **argv)
         delay = (uint32_t)atoi(argv[3]);
     }
     client_send(argv[1], argv[2],  delay);
+    return 0;
+}
 
-
+/**
+ * External command to launch the client
+ */
+int start_client(void)
+{
+	puts("Client started...");
+    uint32_t delay = 100000;
+    char * serverIpAddress = "fd00:dead:beef::1";
+    char * data = "1234";
+    client_send(serverIpAddress, data,  delay);
+    puts("Client stopped...");
     return 0;
 }
