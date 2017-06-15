@@ -55,6 +55,7 @@ USEMODULE += ps
 # which is not needed in a production environment but helps in the
 # development process:
 CFLAGS += -DDEVELHELP
+#CFLAGS += -DHARDWARE_OPENMOTE
 
 # NOTE: Add the package for TinyDTLS
 CFLAGS += -DRIOT_WITH_TINYDTLS

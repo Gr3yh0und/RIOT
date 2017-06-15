@@ -37,11 +37,13 @@
 // D4 = DIO5 = PA4
 // D5 = DIO6 = PA5
 // D6 = DIO7 = PA3
+// LED0 = PC4 (red)
+// LED1 = PC6 (yellow)
+// LED2 = PC7 (green)
+// LED3 = PC5 (orange)
 
  // configures GPIO as software controlled outputs
 void measurement_init_gpio(void);
-
-#ifndef HARDWARE_OPENMOTE
 
 // Basics for all OS platforms
 // Addresses
@@ -63,11 +65,37 @@ void measurement_init_gpio(void);
 #define M_GPIO_SET_PIN(port, pin)          	( M_HWREG(port + M_GPIO_DATA   +  (pin << 2)) = 0xFF )
 #define M_GPIO_CLEAR_PIN(port, pin)        	( M_HWREG(port + M_GPIO_DATA   +  (pin << 2)) = 0x00 )
 
+// undefine possible already existing LED defines
+#undef LED0_ON
+#undef LED0_OFF
+#undef LED1_ON
+#undef LED1_OFF
+#undef LED2_ON
+#undef LED2_OFF
+#undef LED3_ON
+#undef LED3_OFF
+
 // bit masks for GPIOs
+#ifdef HARDWARE_OPENMOTE
+#define LED0_MASK       M_GPIO_PIN_MASK(4) 	// red
+#define LED1_MASK       M_GPIO_PIN_MASK(6) 	// yellow
+#define LED2_MASK       M_GPIO_PIN_MASK(7) 	// green
+#define LED3_MASK       M_GPIO_PIN_MASK(5) 	// orange
+#define LED_MASK_ALL    LED0_MASK + LED1_MASK + LED2_MASK + LED3_MASK
+#define DIO1_MASK       M_GPIO_PIN_MASK(2)
+#define DIO2_MASK       M_GPIO_PIN_MASK(1)
+#define DIO3_MASK       M_GPIO_PIN_MASK(0)
+#define DIO_D_MASK_ALL  DIO1_MASK + DIO2_MASK + DIO3_MASK
+#define DIO4_MASK       M_GPIO_PIN_MASK(2)
+#define DIO5_MASK       M_GPIO_PIN_MASK(4)
+#define DIO6_MASK       M_GPIO_PIN_MASK(5)
+#define DIO7_MASK       M_GPIO_PIN_MASK(3)
+#define DIO_A_MASK_ALL  DIO4_MASK + DIO5_MASK + DIO6_MASK + DIO7_MASK
+#else
 #define LED0_MASK       M_GPIO_PIN_MASK(0) 	// red
 #define LED1_MASK       M_GPIO_PIN_MASK(1) 	// yellow
 #define LED2_MASK       M_GPIO_PIN_MASK(2) 	// green
-#define LED3_MASK       M_GPIO_PIN_MASK(3) 	// orange
+#define LED3_MASK       M_GPIO_PIN_MASK(3) 	// blue
 #define LED_MASK_ALL    LED0_MASK + LED1_MASK + LED2_MASK + LED3_MASK
 #define KEY_LEFT_MASK   M_GPIO_PIN_MASK(4)
 #define KEY_RIGHT_MASK  M_GPIO_PIN_MASK(5)
@@ -79,17 +107,6 @@ void measurement_init_gpio(void);
 #define LCD_RESET_MASK  M_GPIO_PIN_MASK(3)
 #define LCD_CS_MASK     M_GPIO_PIN_MASK(5)
 #define LCD_MASK_ALL    LCD_RESET_MASK + LCD_MODE_MASK + LCD_CS_MASK
-
-// undefine possible already existing LED defines
-#undef LED0_ON
-#undef LED0_OFF
-#undef LED1_ON
-#undef LED1_OFF
-#undef LED2_ON
-#undef LED2_OFF
-#undef LED3_ON
-#undef LED3_OFF
-
 #endif
 
 // Enable or disable GPIO outputs
@@ -102,6 +119,28 @@ void measurement_init_gpio(void);
 #define LED2_OFF        M_GPIO_CLEAR_PIN(M_GPIO_C_BASE, LED2_MASK)
 #define LED3_ON         M_GPIO_SET_PIN(M_GPIO_C_BASE, LED3_MASK)
 #define LED3_OFF        M_GPIO_CLEAR_PIN(M_GPIO_C_BASE, LED3_MASK)
+#ifdef HARDWARE_OPENMOTE
+#define DIO1_ON         M_GPIO_SET_PIN(M_GPIO_D_BASE, DIO1_MASK)
+#define DIO1_OFF        M_GPIO_CLEAR_PIN(M_GPIO_D_BASE, DIO1_MASK)
+#define KEY_LEFT_ON
+#define KEY_LEFT_OFF
+#define KEY_RIGHT_ON
+#define KEY_RIGHT_OFF
+#define KEY_UP_ON
+#define KEY_UP_OFF
+#define KEY_DOWN_ON
+#define KEY_DOWN_OFF
+#define KEY_SELECT_ON
+#define KEY_SELECT_OFF
+#define LCD_RESET_ON
+#define LCD_RESET_OFF
+#define LCD_MODE_ON
+#define LCD_MODE_OFF
+#define LCD_CS_ON
+#define LCD_CS_OFF
+#else
+#define DIO1_ON
+#define DIO1_OFF
 #define KEY_LEFT_ON     M_GPIO_SET_PIN(M_GPIO_C_BASE, KEY_LEFT_MASK)
 #define KEY_LEFT_OFF    M_GPIO_CLEAR_PIN(M_GPIO_C_BASE, KEY_LEFT_MASK)
 #define KEY_RIGHT_ON    M_GPIO_SET_PIN(M_GPIO_C_BASE, KEY_RIGHT_MASK)
@@ -118,6 +157,7 @@ void measurement_init_gpio(void);
 #define LCD_MODE_OFF    M_GPIO_CLEAR_PIN(M_GPIO_B_BASE, LCD_MODE_MASK)
 #define LCD_CS_ON       M_GPIO_SET_PIN(M_GPIO_B_BASE, LCD_CS_MASK)
 #define LCD_CS_OFF      M_GPIO_CLEAR_PIN(M_GPIO_B_BASE, LCD_CS_MASK)
+#endif
 #else
 #define LED0_ON
 #define LED0_OFF
@@ -127,6 +167,8 @@ void measurement_init_gpio(void);
 #define LED2_OFF
 #define LED3_ON
 #define LED3_OFF
+#define DIO1_ON
+#define DIO1_OFF
 #define KEY_LEFT_ON
 #define KEY_LEFT_OFF
 #define KEY_RIGHT_ON
@@ -166,8 +208,6 @@ void measurement_init_gpio(void);
 #define MEASUREMENT_TRANSMIT_OFF    KEY_DOWN_OFF
 #define MEASUREMENT_READ_ON         KEY_SELECT_ON
 #define MEASUREMENT_READ_OFF        KEY_SELECT_OFF
-#define MEASUREMENT_DTLS_WRITE_PACKET_ON LCD_MODE_ON
-#define MEASUREMENT_DTLS_WRITE_PACKET_OFF LCD_MODE_OFF
 
 
 
