@@ -72,28 +72,6 @@ static dtls_context_t *dtls_context = NULL;
 static char *client_payload;
 static size_t buflen = 0;
 
-static const unsigned char ecdsa_priv_key[] = {
-    0x41, 0xC1, 0xCB, 0x6B, 0x51, 0x24, 0x7A, 0x14,
-    0x43, 0x21, 0x43, 0x5B, 0x7A, 0x80, 0xE7, 0x14,
-    0x89, 0x6A, 0x33, 0xBB, 0xAD, 0x72, 0x94, 0xCA,
-    0x40, 0x14, 0x55, 0xA1, 0x94, 0xA9, 0x49, 0xFA
-};
-
-static const unsigned char ecdsa_pub_key_x[] = {
-    0x36, 0xDF, 0xE2, 0xC6, 0xF9, 0xF2, 0xED, 0x29,
-    0xDA, 0x0A, 0x9A, 0x8F, 0x62, 0x68, 0x4E, 0x91,
-    0x63, 0x75, 0xBA, 0x10, 0x30, 0x0C, 0x28, 0xC5,
-    0xE4, 0x7C, 0xFB, 0xF2, 0x5F, 0xA5, 0x8F, 0x52
-};
-
-static const unsigned char ecdsa_pub_key_y[] = {
-    0x71, 0xA0, 0xD4, 0xFC, 0xDE, 0x1A, 0xB8, 0x78,
-    0x5A, 0x3C, 0x78, 0x69, 0x35, 0xA7, 0xCF, 0xAB,
-    0xE9, 0x3F, 0x98, 0x72, 0x09, 0xDA, 0xED, 0x0B,
-    0x4F, 0xAB, 0xC3, 0x6F, 0xC7, 0x72, 0xF8, 0x29
-};
-
-
 /**
  * @brief This care about getting messages and continue with the DTLS flights.
  * This will handle all the packets arriving to the node.
@@ -188,41 +166,6 @@ static int peer_get_psk_info(struct dtls_context_t *ctx UNUSED_PARAM,
     return dtls_alert_fatal_create(DTLS_ALERT_INTERNAL_ERROR);
 }
 #endif /* DTLS_PSK */
-
-
-#ifdef DTLS_ECC
-static int peer_get_ecdsa_key(struct dtls_context_t *ctx,
-              const session_t *session,
-              const dtls_ecdsa_key_t **result)
-{
-    (void) ctx;
-    (void) session;
-
-    static const dtls_ecdsa_key_t ecdsa_key = {
-        .curve = DTLS_ECDH_CURVE_SECP256R1,
-        .priv_key = ecdsa_priv_key,
-        .pub_key_x = ecdsa_pub_key_x,
-        .pub_key_y = ecdsa_pub_key_y
-    };
-
-    *result = &ecdsa_key;
-    return 0;
-}
-
-static int peer_verify_ecdsa_key(struct dtls_context_t *ctx,
-                 const session_t *session,
-                 const unsigned char *other_pub_x,
-                 const unsigned char *other_pub_y,
-                 size_t key_size)
-{
-    (void) ctx;
-    (void) session;
-    (void) key_size;
-    (void) other_pub_x;
-    (void) other_pub_y;
-    return 0;
-}
-#endif /* DTLS_ECC */
 
 /**
  * @brief This will try to transmit using only GNRC stack.
@@ -365,17 +308,10 @@ static void init_dtls(session_t *dst, char *addr_str)
 #ifdef DTLS_PSK
         .get_psk_info = peer_get_psk_info,
 #endif  /* DTLS_PSK */
-#ifdef DTLS_ECC
-        .get_ecdsa_key = peer_get_ecdsa_key,
-        .verify_ecdsa_key = peer_verify_ecdsa_key
-#endif  /* DTLS_ECC */
     };
 
 #ifdef DTLS_PSK
     puts("Client support PSK");
-#endif
-#ifdef DTLS_ECC
-    puts("Client support ECC");
 #endif
 
     DEBUG("DBG-Client: Debug ON");
@@ -422,8 +358,7 @@ static void client_send(char *addr_str, char *data, unsigned int delay)
     static int connected = 0;
     msg_t msg;
 
-   gnrc_netreg_entry_t entry = GNRC_NETREG_ENTRY_INIT_PID(CLIENT_PORT,
-                                                           sched_active_pid);
+    gnrc_netreg_entry_t entry = GNRC_NETREG_ENTRY_INIT_PID(CLIENT_PORT, sched_active_pid);
     dtls_init();
 
     if (gnrc_netreg_register(GNRC_NETTYPE_UDP, &entry)) {
