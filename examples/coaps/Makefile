@@ -29,6 +29,7 @@ USEMODULE += auto_init_gnrc_netif
 USEMODULE += gnrc_ipv6_router_default
 USEMODULE += gnrc_udp
 USEMODULE += gnrc_sock_udp
+USEMODULE += gnrc_conn_udp
 
 # Add a routing protocol
 USEMODULE += gnrc_rpl
@@ -41,10 +42,10 @@ USEMODULE += gnrc_pktdump
 USEMODULE += gnrc_icmpv6_echo
 
 # Add also the shell, some shell commands
-CFLAGS += -DRIOT_SHELL
-USEMODULE += shell
+#CFLAGS += -DRIOT_SHELL
+#USEMODULE += shell
 USEMODULE += shell_commands
-USEMODULE += ps
+#USEMODULE += ps
 
 #TinyDTLs (crypto.c) made use of pthread
  ifneq ($(BOARD),native)
@@ -59,10 +60,12 @@ CFLAGS += -DDEVELHELP
 
 # NOTE: Add the package for TinyDTLS
 CFLAGS += -DRIOT_WITH_TINYDTLS
+CFLAGS += -DWITH_TINYDTLS
 USEPKG += tinydtls
 
 # NOTE: Add the package for YaCoAP
 CFLAGS += -DRIOT_WITH_YACOAP
+CFLAGS += -DWITH_YACOAP
 USEPKG += yacoap
 
 # Switch between UDP Client and Server
@@ -72,7 +75,6 @@ CFLAGS += -DWITH_CLIENT_PUT
 
 # Switch GPIO Output
 CFLAGS += -DGPIO_OUTPUT_ENABLE
-CFLAGS += -DTHESIS_MEASUREMENT_RF
 
 # NOTE: Those are taken from TinyDTLS. As the original Makefiles are
 #      overwitten is a good idea to preserve them here.
