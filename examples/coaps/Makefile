@@ -44,7 +44,7 @@ USEMODULE += gnrc_icmpv6_echo
 # Add also the shell, some shell commands
 #CFLAGS += -DRIOT_SHELL
 #USEMODULE += shell
-USEMODULE += shell_commands
+#USEMODULE += shell_commands
 #USEMODULE += ps
 
 #TinyDTLs (crypto.c) made use of pthread

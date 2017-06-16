@@ -80,7 +80,7 @@ int handle_write(struct dtls_context_t *ctx, session_t *session, uint8 *data, si
 	 *          This issue appears in the FIT-Lab (m3 motes).
 	 *          In native, is not required.
 	 */
-	xtimer_usleep(500000);
+	xtimer_usleep(5000);
 
 	/* send packet */
 	if (!gnrc_netapi_dispatch_send(GNRC_NETTYPE_UDP, GNRC_NETREG_DEMUX_CTX_ALL, ip)) {
@@ -122,8 +122,7 @@ int handle_read(struct dtls_context_t *context, session_t *session, uint8 *data,
 	MEASUREMENT_DTLS_TOTAL_OFF;
 	coap_packet_t packet;
 	coap_parse(data, length, &packet);
-	puts("(COAP) Answer was: ");
-	puts((char *)packet.payload.p);
+	printf("(COAP) Answer was: %s\n", packet.payload.p);
 	(void) context;
 	(void) session;
 #endif

@@ -72,11 +72,19 @@ int main(void)
     // Message queue is needed for many packets at once
     msg_init_queue(_main_msg_queue, MAIN_QUEUE_SIZE);
 
-    // Print local IP addresses
-    xtimer_usleep(500);
-	puts("Configured network interfaces:");
-	_netif_config(0, NULL);
-	xtimer_sleep(1);
+    // Print local IP address
+    printf("Waiting for IP...");
+	kernel_pid_t interface[GNRC_NETIF_NUMOF];
+	char ipAddress[IPV6_ADDR_MAX_STR_LEN];
+	size_t numberOfInterfaces = gnrc_netif_get(interface);
+	if (numberOfInterfaces > 0) {
+		gnrc_ipv6_netif_t *entry = gnrc_ipv6_netif_get(interface[0]);
+		ipv6_addr_to_str(ipAddress, &entry->addrs[3].addr, IPV6_ADDR_MAX_STR_LEN);
+		while(strcmp(ipAddress, "fd00::212:4b00:615:a86b")){
+			ipv6_addr_to_str(ipAddress, &entry->addrs[3].addr, IPV6_ADDR_MAX_STR_LEN);
+		}
+	}
+	printf("%s\n", ipAddress);
 
 #ifdef RIOT_SHELL
     /* start shell */
@@ -90,7 +98,7 @@ int main(void)
 
 #ifdef WITH_CLIENT
 	// Setup client UDP
-    puts("Setting up UDP");
+    printf("Setting up UDP...\n");
 	session.size = sizeof(session.addr);
 	session.port = UDP_REMOTE_PORT;
 	ipv6_addr_from_str(&session.addr, UDP_REMOTE_ADDRESS);
@@ -110,13 +118,13 @@ int main(void)
 
 #ifdef WITH_CLIENT_PUT
 	// PUT light
-	puts("Configuration = Client with PUT");
+	printf("Client with PUT...\n");
 	static coap_resource_path_t resourcePath = {1, {"light"}};
 	static coap_resource_t request = {COAP_RDY, COAP_METHOD_PUT, COAP_TYPE_CON, NULL, &resourcePath, COAP_SET_CONTENTTYPE(COAP_CONTENTTYPE_TXT_PLAIN)};
 	coap_make_request(messageId, NULL, &request, &messageId, sizeof(messageId), &requestPacket);
 #else
 	// GET time
-	puts("Configuration = Client with GET");
+	printf("Client with GET...\n");
 	static coap_resource_path_t resourcePath = {1, {"time"}};
 	static coap_resource_t request = {COAP_RDY, COAP_METHOD_GET, COAP_TYPE_CON, NULL, &resourcePath, COAP_SET_CONTENTTYPE(COAP_CONTENTTYPE_TXT_PLAIN)};
 	coap_make_request(messageId, NULL, &request, NULL, 0, &requestPacket);
@@ -132,7 +140,7 @@ int main(void)
 
 #if defined(WITH_TINYDTLS) && defined(WITH_CLIENT)
 	// Setup DTLS
-	puts("Initializing DTLS...");
+    printf("Initializing DTLS...\n");
 	dtls_set_log_level(DTLS_DEBUG_LEVEL);
 	dtls_context = dtls_new_context(&connection);
 
@@ -141,7 +149,7 @@ int main(void)
 
 	dtls_init();
 	if (!dtls_context) {
-		puts("cannot create context\n");
+		printf("cannot create context\n");
 	    return 1;
 	}
 #endif
