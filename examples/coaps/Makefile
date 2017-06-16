@@ -28,7 +28,6 @@ USEMODULE += auto_init_gnrc_netif
 # Specify the mandatory networking modules for IPv6 and sUDP
 USEMODULE += gnrc_ipv6_router_default
 USEMODULE += gnrc_udp
-USEMODULE += gnrc_sock_udp
 USEMODULE += gnrc_conn_udp
 
 # Add a routing protocol
@@ -36,10 +35,10 @@ USEMODULE += gnrc_rpl
 
 # The following are only optional:
 # This application dumps received packets to STDIO using the pktdump module
-USEMODULE += gnrc_pktdump
+#USEMODULE += gnrc_pktdump
 
 # Additional networking modules that can be dropped if not needed
-USEMODULE += gnrc_icmpv6_echo
+#USEMODULE += gnrc_icmpv6_echo
 
 # Add also the shell, some shell commands
 #CFLAGS += -DRIOT_SHELL
@@ -92,7 +91,7 @@ CFLAGS += -DDTLS_PSK
 #          If said issue appears, enable this line.
 CFLAGS += -DNDEBUG
 
-# NOTE: The configuration for socket or non-socket  communication in TinyDTLS.
+# NOTE: The configuration for socket or non-socket communication in TinyDTLS.
 CFLAGS += -DWITH_RIOT_GNRC
 
 # Change this to 0 show compiler invocation lines by default:

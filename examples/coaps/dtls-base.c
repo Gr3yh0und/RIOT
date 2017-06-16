@@ -122,7 +122,7 @@ int handle_read(struct dtls_context_t *context, session_t *session, uint8 *data,
 	MEASUREMENT_DTLS_TOTAL_OFF;
 	coap_packet_t packet;
 	coap_parse(data, length, &packet);
-	printf("(COAP) Answer was: %s\n", packet.payload.p);
+	printf("(COAP) Answer was: %.*s\n", packet.payload.len, (char *)packet.payload.p);
 	(void) context;
 	(void) session;
 #endif
