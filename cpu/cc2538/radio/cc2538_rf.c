@@ -107,10 +107,10 @@ void cc2538_init(void)
     CCTEST_OBSSEL1 = 0;                        /* PC1 = N/C            */
     CCTEST_OBSSEL2 = 0;                        /* PC2 = N/C            */
     CCTEST_OBSSEL3 = 0;                        /* PC3 = USER_BUTTON    */
-    CCTEST_OBSSEL4 = OBSSEL_EN | rfc_obs_sig0; /* PC4 = RED_LED        */
+    CCTEST_OBSSEL4 = 0; 						/* PC4 = RED_LED        */
     CCTEST_OBSSEL5 = 0;                        /* PC5 = ORANGE_LED     */
-    CCTEST_OBSSEL6 = OBSSEL_EN | rfc_obs_sig1; /* PC6 = YELLOW_LED     */
-    CCTEST_OBSSEL7 = OBSSEL_EN | rfc_obs_sig2; /* PC7 = GREEN_LED      */
+    CCTEST_OBSSEL6 = 0; 						/* PC6 = YELLOW_LED     */
+    CCTEST_OBSSEL7 = 0; 						/* PC7 = GREEN_LED      */
 #else
     /* Assume BOARD_CC2538DK (or similar). */
     CCTEST_OBSSEL0 = 0;                        /* PC0 = LED_1 (red)    */
