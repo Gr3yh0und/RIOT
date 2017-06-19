@@ -33,22 +33,22 @@
 #include "measurement.h"
 
 /* TinyDTLS */
-#ifdef RIOT_WITH_TINYDTLS
+#ifdef WITH_TINYDTLS
 #include "dtls.h"
 #include "dtls_debug.h"
 #include "tinydtls.h"
 #endif
 
 /* YaCoap */
-#ifdef RIOT_WITH_YACOAP
+#ifdef WITH_YACOAP
 #include "coap.h"
 #endif
 
 #define ENABLE_DEBUG  (1)
 #include "debug.h"
 
-#ifdef RIOT_WITH_TINYDTLS_PORT
-#define DEFAULT_PORT RIOT_WITH_TINYDTLS_PORT
+#ifdef WITH_TINYDTLS_PORT
+#define DEFAULT_PORT WITH_TINYDTLS_PORT
 #else
 #define DEFAULT_PORT 6666
 #endif
@@ -57,7 +57,7 @@
 #include "dtls-base.h"
 
 // TinyDTLS
-#ifdef RIOT_WITH_TINYDTLS
+#ifdef WITH_TINYDTLS
 /* TODO: MAke this local! */
 static dtls_context_t *dtls_context = NULL;
 
@@ -84,28 +84,22 @@ static const unsigned char ecdsa_pub_key_y[] = {
 #endif
 
 /* YaCoap */
-#ifdef RIOT_WITH_YACOAP
+#ifdef WITH_YACOAP
 extern void resource_setup(const coap_resource_t *resources);
 extern coap_resource_t resources[];
 #endif
 
-
-static gnrc_netreg_entry_t server = GNRC_NETREG_ENTRY_INIT_PID(
-                                                     GNRC_NETREG_DEMUX_CTX_ALL,
-                                                     KERNEL_PID_UNDEF);
-
 #define READER_QUEUE_SIZE (8U)
+static gnrc_netreg_entry_t server = GNRC_NETREG_ENTRY_INIT_PID(GNRC_NETREG_DEMUX_CTX_ALL, KERNEL_PID_UNDEF);
 char _server_stack[THREAD_STACKSIZE_MAIN + THREAD_EXTRA_STACKSIZE_PRINTF];
-
 static kernel_pid_t _dtls_kernel_pid;
 
-#ifdef RIOT_WITH_TINYDTLS
+#ifdef WITH_TINYDTLS
 /**
  * @brief This care about getting messages and continue with the DTLS flights
  */
 static void dtls_handle_read(dtls_context_t *ctx, gnrc_pktsnip_t *pkt)
 {
-
     static session_t session;
 
     /*
@@ -136,16 +130,14 @@ static void dtls_handle_read(dtls_context_t *ctx, gnrc_pktsnip_t *pkt)
     ipv6_addr_from_str(&session.addr, addr_str);
 
     dtls_handle_message(ctx, &session, pkt->data, (unsigned int)pkt->size);
-
 }
-
 
 /**
  * @brief We got the TinyDTLS App Data message and answer with the same
  */
-static int read_from_peer(struct dtls_context_t *context, session_t *session, uint8 *data, size_t length) {
-
-#ifdef RIOT_WITH_YACOAP
+static int read_from_peer(struct dtls_context_t *context, session_t *session, uint8 *data, size_t length)
+{
+#ifdef WITH_YACOAP
 	coap_packet_t requestPacket, responsePacket;
 	uint8 responseBuffer[DTLS_MAX_BUF];
 	size_t responseBufferLength = sizeof(responseBuffer);
@@ -175,7 +167,6 @@ static int read_from_peer(struct dtls_context_t *context, session_t *session, ui
  */
 static int gnrc_sending(char *addr_str, char *data, size_t data_len, unsigned short rem_port )
 {
-
     ipv6_addr_t addr;
     gnrc_pktsnip_t *payload, *udp, *ip;
 
@@ -227,14 +218,12 @@ static int gnrc_sending(char *addr_str, char *data, size_t data_len, unsigned sh
     return 1;
 }
 
-#ifdef RIOT_WITH_TINYDTLS
+#ifdef WITH_TINYDTLS
 /**
  * @brief We communicate with the other peer.
  */
-static int send_to_peer(struct dtls_context_t *ctx,
-                        session_t *session, uint8 *buf, size_t len)
+static int send_to_peer(struct dtls_context_t *ctx, session_t *session, uint8 *buf, size_t len)
 {
-
     (void) session;
 
     /*FIXME TODO: dtls_get_app_data(ctx) should have the remote port! */
@@ -247,7 +236,6 @@ static int send_to_peer(struct dtls_context_t *ctx,
 }
 
 #ifdef DTLS_PSK
-//own
 int get_psk_info(struct dtls_context_t *ctx, const session_t *session,
          dtls_credentials_type_t type,
          const unsigned char *id, size_t id_len,
@@ -294,7 +282,6 @@ static int peer_get_psk_info(struct dtls_context_t *ctx, const session_t *sessio
              const unsigned char *id, size_t id_len,
              unsigned char *result, size_t result_length)
 {
-
     (void) ctx;
     (void) session;
     struct keymap_t {
@@ -334,97 +321,6 @@ static int peer_get_psk_info(struct dtls_context_t *ctx, const session_t *sessio
 }
 #endif /* DTLS_PSK */
 
-#ifdef DTLS_ECC
-static int peer_get_ecdsa_key(struct dtls_context_t *ctx,
-              const session_t *session,
-              const dtls_ecdsa_key_t **result)
-{
-    (void) ctx;
-    (void) session;
-    static const dtls_ecdsa_key_t ecdsa_key = {
-        .curve = DTLS_ECDH_CURVE_SECP256R1,
-        .priv_key = ecdsa_priv_key,
-        .pub_key_x = ecdsa_pub_key_x,
-        .pub_key_y = ecdsa_pub_key_y
-    };
-
-    *result = &ecdsa_key;
-    return 0;
-}
-
-static int peer_verify_ecdsa_key(struct dtls_context_t *ctx,
-                 const session_t *session,
-                 const unsigned char *other_pub_x,
-                 const unsigned char *other_pub_y,
-                 size_t key_size)
-{
-    (void) ctx;
-    (void) session;
-    (void) other_pub_x;
-    (void) other_pub_y;
-    (void) key_size;
-    return 0;
-}
-#endif /* DTLS_ECC */
-
-/**
- * @brief We prepare the DTLS for this node.
- */
-static void init_dtls(void)
-{
-    static dtls_handler_t cb = {
-        .write = send_to_peer,
-        .read  = read_from_peer,
-        .event = NULL,
-#ifdef DTLS_PSK
-        .get_psk_info = peer_get_psk_info,
-#endif  /* DTLS_PSK */
-#ifdef DTLS_ECC
-        .get_ecdsa_key = peer_get_ecdsa_key,
-        .verify_ecdsa_key = peer_verify_ecdsa_key
-#endif  /* DTLS_ECC */
-    };
-
-#ifdef DTLS_PSK
-    puts("Server support PSK");
-#endif
-#ifdef DTLS_ECC
-    puts("Server support ECC");
-#endif
-
-    DEBUG("DBG-Server On\n");
-
-#ifdef RIOT_WITH_YACOAP
-    // Initialise COAP resources
-    resource_setup(resources);
-#endif
-
-    /*
-     * The context for the server is a little different from the client.
-     * The simplicity of GNRC do not mix transparently with
-     * the DTLS Context. At this point, the server need a fresh context
-     * however dtls_context->app must be populated with an unknown
-     * IPv6 address.
-     *
-     * The non-valid Ipv6 address ( :: ) is discarded due the chaos.
-     * For now, the first value will be the loopback.
-     */
-    char *addr_str = "::1";
-
-    /*akin to syslog: EMERG, ALERT, CRITC, NOTICE, INFO, DEBUG */
-    dtls_set_log_level(DTLS_LOG_EMERG);
-
-
-    dtls_context = dtls_new_context(addr_str);
-    if (dtls_context) {
-        dtls_set_handler(dtls_context, &cb);
-    }
-    else {
-        puts("Server was unable to generate DTLS Context!");
-        exit(-1);
-    }
-}
-
 /* NOTE: wrapper or trampoline ? (Syntax question) */
 void *dtls_server_wrapper(void *arg)
 {
@@ -436,46 +332,77 @@ void *dtls_server_wrapper(void *arg)
     /* The GNRC examples uses packet dump but we want a custom one */
     msg_init_queue(_reader_queue, READER_QUEUE_SIZE);
 
-    init_dtls();
+    static dtls_handler_t cb = {
+    		.write = send_to_peer,
+            .read  = read_from_peer,
+            .event = NULL,
+    #ifdef DTLS_PSK
+            .get_psk_info = peer_get_psk_info,
+    #endif  /* DTLS_PSK */
+        };
+
+    DEBUG("Note: DEBUG activated\n");
+
+#ifdef WITH_YACOAP
+	// Initialise COAP resources
+	printf("Allocating CoAP resources...");
+	resource_setup(resources);
+	printf(" Done!\n");
+#endif
+
+	/*
+	 * The context for the server is a little different from the client.
+	 * The simplicity of GNRC do not mix transparently with
+	 * the DTLS Context. At this point, the server need a fresh context
+	 * however dtls_context->app must be populated with an unknown
+	 * IPv6 address.
+	 *
+	 * The non-valid Ipv6 address ( :: ) is discarded due the chaos.
+	 * For now, the first value will be the loopback.
+	 */
+	char *addr_str = "::1";
+
+	dtls_set_log_level(DTLS_LOG_EMERG);
+
+	dtls_context = dtls_new_context(addr_str);
+	if (dtls_context) {
+		dtls_set_handler(dtls_context, &cb);
+	}
+	else {
+		puts("Server was unable to generate DTLS Context!");
+		exit(-1);
+	}
 
     /*
      * FIXME: After mutliple retransmissions, and canceled client's sessions
      * the server become unable to sent NDP NA messages. Still, the TinyDTLS
      * debugs seems to be fine.
      */
-
     while (1) {
-
         /* wait for a message */
         msg_receive(&msg);
 
         DEBUG("DBG-Server: Record Rcvd!\n");
         dtls_handle_read(dtls_context, (gnrc_pktsnip_t *)(msg.content.ptr));
-
-        /*TODO: What happens with other clients connecting at the same time? */
-
-    } /*While */
+    }
 
     dtls_free_context(dtls_context);
 }
 #endif
 
-void start_server(void)
+int server_thread_create(int argc, char **argv)
 {
     uint16_t port;
-
     port = (uint16_t)DEFAULT_PORT;
-
     (void) _dtls_kernel_pid;
 
     /* Only one instance of the server */
     if (server.target.pid != KERNEL_PID_UNDEF) {
         printf("Error: server already running\n");
-        return;
+        return 1;
     }
 
-#ifdef RIOT_WITH_TINYDTLS
-    /*TESTING tinydtls*/
+#ifdef WITH_TINYDTLS
     dtls_init();
 #endif
 
@@ -487,13 +414,16 @@ void start_server(void)
 
     server.demux_ctx = (uint32_t)port;
 
-    if (gnrc_netreg_register(GNRC_NETTYPE_UDP, &server) == 0)
-      printf("Success: started DTLS server on port %" PRIu16 "\n", port);
-   else
-      printf("FAILURE: The UDP port is not registered!\n");
+    if (gnrc_netreg_register(GNRC_NETTYPE_UDP, &server) == 0){
+    	printf("Success: started DTLS server on port %" PRIu16 "\n", port);
+    	return 0;
+    }else{
+    	printf("FAILURE: The UDP port is not registered!\n");
+    	return 1;
+    }
 }
 
-static void stop_server(void)
+static void server_thread_stop(void)
 {
     /* check if server is running at all */
     if (server.target.pid == KERNEL_PID_UNDEF) {
@@ -501,7 +431,7 @@ static void stop_server(void)
         return;
     }
 
-#ifdef RIOT_WITH_TINYDTLS
+#ifdef WITH_TINYDTLS
     dtls_free_context(dtls_context);
 #endif
 
@@ -518,10 +448,10 @@ int udp_server_cmd(int argc, char **argv)
         return 1;
     }
     if (strcmp(argv[1], "start") == 0) {
-        start_server();
+    	server_thread_create(0, NULL);
     }
     else if (strcmp(argv[1], "stop") == 0) {
-        stop_server();
+        server_thread_stop();
     }
     else {
         puts("error: invalid command");

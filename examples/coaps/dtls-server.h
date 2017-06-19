@@ -13,7 +13,7 @@
 #include "dtls-base.h"
 #include "dtls.h"
 
-void start_server(void);
+int server_thread_create(int argc, char **argv);
 int get_psk_info(struct dtls_context_t *ctx, const session_t *session,
 						 dtls_credentials_type_t type,
 						 const unsigned char *id, size_t id_len,

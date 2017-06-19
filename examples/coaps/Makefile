@@ -32,6 +32,7 @@ USEMODULE += gnrc_conn_udp
 
 # Add a routing protocol
 USEMODULE += gnrc_rpl
+USEMODULE += auto_init_gnrc_rpl
 
 # The following are only optional:
 # This application dumps received packets to STDIO using the pktdump module
@@ -47,25 +48,29 @@ USEMODULE += gnrc_rpl
 #USEMODULE += ps
 
 #TinyDTLs (crypto.c) made use of pthread
- ifneq ($(BOARD),native)
- USEMODULE += pthread
- endif
+ifneq ($(BOARD),native)
+	USEMODULE += pthread
+endif
+ 
+# NOTE: The configuration for socket or non-socket communication in TinyDTLS.
+CFLAGS += -DWITH_RIOT_GNRC
 
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the
 # development process:
 CFLAGS += -DDEVELHELP
-#CFLAGS += -DHARDWARE_OPENMOTE
+
+#NOTE: Configure hard coded global IPv6 address if needed
+#IPV6_STATIC_LLADDR ?= '"fd00::212:4b00:430:5425"'
+#CFLAGS += -DGNRC_IPV6_STATIC_LLADDR=$(IPV6_STATIC_LLADDR)
 
 # NOTE: Add the package for TinyDTLS
-CFLAGS += -DRIOT_WITH_TINYDTLS
-CFLAGS += -DWITH_TINYDTLS
 USEPKG += tinydtls
+CFLAGS += -DWITH_TINYDTLS
 
 # NOTE: Add the package for YaCoAP
-CFLAGS += -DRIOT_WITH_YACOAP
-CFLAGS += -DWITH_YACOAP
 USEPKG += yacoap
+CFLAGS += -DWITH_YACOAP
 
 # Switch between UDP Client and Server
 CFLAGS += -DWITH_CLIENT
@@ -73,26 +78,17 @@ CFLAGS += -DWITH_CLIENT_PUT
 #CFLAGS += -DWITH_SERVER
 
 # Switch GPIO Output
+CFLAGS += -DHARDWARE_OPENMOTE
 CFLAGS += -DGPIO_OUTPUT_ENABLE
+CFLAGS += -DGPIO_OUTPUT_ENABLE_LEDS
 
 # NOTE: Those are taken from TinyDTLS. As the original Makefiles are
 #      overwitten is a good idea to preserve them here.
-CFLAGS += -DDTLSv12 -DWITH_SHA256
-
-# NOTE: This adds support for TLS_PSK_WITH_AES_128_CCM_8
-CFLAGS += -DDTLS_PSK
-
-# NOTE: This adds support for TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8
-#CFLAGS += -DDTLS_ECC
+CFLAGS += -DDTLSv12 -DWITH_SHA256 -DDTLS_PSK
 
 # NOTE: If enabled TinyDTLS' log are disabled (if memory is a issue).
-# WARNING: Sometimes the log leads to Stack pointer corrupted.
-#          The reason is not identified yet.
-#          If said issue appears, enable this line.
 CFLAGS += -DNDEBUG
-
-# NOTE: The configuration for socket or non-socket communication in TinyDTLS.
-CFLAGS += -DWITH_RIOT_GNRC
+#CFLAGS += -DYACOAP_DEBUG
 
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1

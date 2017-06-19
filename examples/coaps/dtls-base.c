@@ -1,14 +1,26 @@
 /*
  * dtls_base.c
  *
+ *  Base class for DTLS client and server connections
+ *  Partly based on the RIOT DTLS example by Raul Fuentes
+ *
  *  Created on: 15 Jun 2017
  *      Author: Michael Morscher, morscher@hm.edu
  */
 
 #include "dtls-base.h"
-#include "measurement.h"
 
 #ifdef WITH_TINYDTLS
+/* Definition of executed handlers */
+dtls_handler_t dtls_callback = {
+  .write = handle_write,
+  .read  = handle_read,
+  .event = handle_event,
+#ifdef DTLS_PSK
+  .get_psk_info = get_psk_info,
+#endif
+};
+
 /* Handler called when a new raw UDP packet is received */
 void onUdpPacket(dtls_context_t *ctx, gnrc_pktsnip_t *pkt)
 {
@@ -45,13 +57,13 @@ int handle_write(struct dtls_context_t *ctx, session_t *session, uint8 *data, si
 	ipv6_addr_t addr;
 	gnrc_pktsnip_t *payload, *udp, *ip;
 
-	/* parse destination address */
+	// parse destination address
 	if (ipv6_addr_from_str(&addr, UDP_REMOTE_ADDRESS) == NULL) {
 		puts("Error: unable to parse destination address");
 		return -1;
 	}
 
-	/*  allocate payload */
+	// allocate payload
 	payload = gnrc_pktbuf_add(NULL, data, len, GNRC_NETTYPE_UNDEF);
 
 	if (payload == NULL) {
@@ -59,15 +71,15 @@ int handle_write(struct dtls_context_t *ctx, session_t *session, uint8 *data, si
 		return -1;
 	}
 
-	/* allocate UDP header */
+	// allocate UDP header
 	udp = gnrc_udp_hdr_build(payload, (uint16_t) UDP_LOCAL_PORT, (uint16_t) UDP_REMOTE_PORT);
 	if (udp == NULL) {
-		puts("Error: unable to allocate UDP header");
+		puts("Error: Unable to allocate UDP header");
 		gnrc_pktbuf_release(payload);
 		return -1;
 	}
 
-	/* allocate IPv6 header */
+	// allocate IPv6 header
 	ip = gnrc_ipv6_hdr_build(udp, NULL,  &addr);
 	if (ip == NULL) {
 		puts("Error: unable to allocate IPv6 header");
@@ -80,7 +92,7 @@ int handle_write(struct dtls_context_t *ctx, session_t *session, uint8 *data, si
 	 *          This issue appears in the FIT-Lab (m3 motes).
 	 *          In native, is not required.
 	 */
-	xtimer_usleep(5000);
+	//xtimer_usleep(5000);
 
 	/* send packet */
 	if (!gnrc_netapi_dispatch_send(GNRC_NETTYPE_UDP, GNRC_NETREG_DEMUX_CTX_ALL, ip)) {
@@ -96,6 +108,7 @@ int handle_write(struct dtls_context_t *ctx, session_t *session, uint8 *data, si
 int handle_read(struct dtls_context_t *context, session_t *session, uint8 *data, size_t length)
 {
 #ifdef WITH_YACOAP
+	// Server
 #ifdef WITH_SERVER
 	coap_packet_t requestPacket, responsePacket;
 	uint8 responseBuffer[DTLS_MAX_BUF];
@@ -118,6 +131,7 @@ int handle_read(struct dtls_context_t *context, session_t *session, uint8 *data,
 	}
 #endif
 
+	// Client
 #ifdef WITH_CLIENT
 	MEASUREMENT_DTLS_TOTAL_OFF;
 	coap_packet_t packet;
@@ -152,6 +166,3 @@ int handle_event(struct dtls_context_t *ctx, session_t *session, dtls_alert_leve
 	return 0;
 }
 #endif
-
-
-
