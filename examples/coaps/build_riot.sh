@@ -1,24 +1,38 @@
 #!/bin/bash
 
 # Configuration, ToDo: Remove hard coding
-DIRECTORY="bin/cc2538dk"
-THREADS=2
+DIRECTORY_CC2538DK="bin/cc2538dk"
+DIRECTORY_OPENMODE="bin/openmote-cc2538"
+THREADS=4
+DELETION=0
 
 # Delete old object files
-if [ -d "$DIRECTORY" ]; then
-	echo "Removing old object files..."
-	rm -r $DIRECTORY
+if [ $DELETION == 1 ]; then
+	if [ -d "$DIRECTORY_CC2538DK" ]; then
+		echo "Removing old object files for CC2538DK..."
+		rm -r $DIRECTORY_CC2538DK
+	fi
+	if [ -d "$DIRECTORY_OPENMODE" ]; then
+		echo "Removing old object files for OpenMote..."
+		rm -r $DIRECTORY_OPENMODE
+	fi
 fi
 
 # Start new build
 echo "Starting new build..."
+echo "For CC2538DK:"
 make -j$THREADS BOARD=cc2538dk
+if [[ $? != 0 ]]; then
+	exit 255
+fi
+echo "For OpenMote:"
+make -j$THREADS BOARD=openmote-cc2538
 if [[ $? != 0 ]]; then
 	exit 255
 fi
 
 # Get size of new build
-OUTPUT_NEW="$(arm-none-eabi-size $DIRECTORY/coaps.elf)"
+OUTPUT_NEW="$(arm-none-eabi-size $DIRECTORY_CC2538DK/coaps.elf)"
 RE_NEW="([0-9]{3,6})\s*([0-9]{3,6})\s*([0-9]{3,6})\s*([0-9]{3,6})"
 [[ $OUTPUT_NEW =~ $RE_NEW ]]
 	TEXT_NEW=${BASH_REMATCH[1]}
@@ -42,6 +56,7 @@ DATA_DIF=`expr $DATA_NEW - $DATA_OLD`
 DEC_DIF=`expr $DEC_NEW - $DEC_OLD`
 
 # Print results
+echo ""
 echo "Old: TEXT($TEXT_OLD), BSS($BSS_OLD), DATA($DATA_OLD), DEC($DEC_OLD)"
 echo "New: TEXT($TEXT_NEW), BSS($BSS_NEW), DATA($DATA_NEW), DEC($DEC_NEW)"
 echo "Dif: TEXT($TEXT_DIF), BSS($BSS_DIF), DATA($DATA_DIF), DEC($DEC_DIF)"

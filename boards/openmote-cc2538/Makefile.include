@@ -1,6 +1,6 @@
 # define the cpu used by the OpenMote-cc2538 board
 export CPU = cc2538
-export CPU_MODEL = cc2538sf53
+export CPU_MODEL = cc2538sf23
 
 # define the default port depending on the host OS
 PORT_LINUX ?= /dev/ttyUSB0
@@ -11,7 +11,7 @@ export PROGRAMMER ?= cc2538-bsl
 
 ifeq ($(PROGRAMMER),jlink)
   # setup JLink for flashing
-  export JLINK_DEVICE := cc2538sf53
+  export JLINK_DEVICE := cc2538sf23
   export JLINK_FLASH_ADDR := 200000
   export JLINK_IF := JTAG
   export TUI := 1
