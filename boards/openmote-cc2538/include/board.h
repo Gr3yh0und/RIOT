@@ -82,7 +82,7 @@
 #endif
 
 #define CCA_BACKDOOR_ENABLE       (1)
-#define CCA_BACKDOOR_PORT_A_PIN   (3) /**< ON/SLEEP Pin */
+#define CCA_BACKDOOR_PORT_A_PIN   (6) /**< ON/SLEEP Pin */
 #define CCA_BACKDOOR_ACTIVE_LEVEL (0) /**< Active low */
 /** @} */
 
