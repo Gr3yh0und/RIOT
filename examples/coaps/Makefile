@@ -55,10 +55,8 @@ endif
 # NOTE: The configuration for socket or non-socket communication in TinyDTLS.
 CFLAGS += -DWITH_RIOT_GNRC
 
-# Comment this out to disable code in RIOT that does safety checking
-# which is not needed in a production environment but helps in the
-# development process:
-CFLAGS += -DDEVELHELP
+# NOTE: Minimize RAM usage
+CFLAGS += -DGNRC_PKTBUF_SIZE=512 -DGNRC_IPV6_NETIF_ADDR_NUMOF=6 -DGNRC_IPV6_NC_SIZE=5
 
 #NOTE: Configure hard coded global IPv6 address if needed
 #IPV6_STATIC_LLADDR ?= '"fd00::212:4b00:430:5425"'
@@ -77,7 +75,7 @@ CFLAGS += -DWITH_CLIENT
 CFLAGS += -DWITH_CLIENT_PUT
 #CFLAGS += -DWITH_SERVER
 
-# Switch GPIO Output
+# Switch GPIO Output/Hardware
 #CFLAGS += -DHARDWARE_OPENMOTE
 #CFLAGS += -DGPIO_OUTPUT_ENABLE
 #CFLAGS += -DGPIO_OUTPUT_ENABLE_LEDS
@@ -90,6 +88,7 @@ CFLAGS += -DDTLSv12 -DWITH_SHA256 -DDTLS_PSK
 CFLAGS += -DNDEBUG
 #CFLAGS += -DYACOAP_DEBUG
 #CFLAGS += -DWITH_CONSOLE
+CFLAGS += -DDEVELHELP
 
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1
