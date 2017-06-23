@@ -51,3 +51,5 @@ __pycache__
 burn\.seg
 
 examples/coaps/build\.old
+
+examples/coaps/coaps-riot-openmote\.elf

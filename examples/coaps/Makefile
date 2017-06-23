@@ -78,9 +78,9 @@ CFLAGS += -DWITH_CLIENT_PUT
 #CFLAGS += -DWITH_SERVER
 
 # Switch GPIO Output
-CFLAGS += -DHARDWARE_OPENMOTE
-CFLAGS += -DGPIO_OUTPUT_ENABLE
-CFLAGS += -DGPIO_OUTPUT_ENABLE_LEDS
+#CFLAGS += -DHARDWARE_OPENMOTE
+#CFLAGS += -DGPIO_OUTPUT_ENABLE
+#CFLAGS += -DGPIO_OUTPUT_ENABLE_LEDS
 
 # NOTE: Those are taken from TinyDTLS. As the original Makefiles are
 #      overwitten is a good idea to preserve them here.
@@ -89,6 +89,7 @@ CFLAGS += -DDTLSv12 -DWITH_SHA256 -DDTLS_PSK
 # NOTE: If enabled TinyDTLS' log are disabled (if memory is a issue).
 CFLAGS += -DNDEBUG
 #CFLAGS += -DYACOAP_DEBUG
+#CFLAGS += -DWITH_CONSOLE
 
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1

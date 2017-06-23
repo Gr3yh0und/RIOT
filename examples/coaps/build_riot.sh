@@ -2,7 +2,7 @@
 
 # Configuration, ToDo: Remove hard coding
 DIRECTORY_CC2538DK="bin/cc2538dk"
-DIRECTORY_OPENMODE="bin/openmote-cc2538"
+DIRECTORY_OPENMOTE="bin/openmote-cc2538"
 THREADS=4
 DELETION=0
 
@@ -12,9 +12,9 @@ if [ $DELETION == 1 ]; then
 		echo "Removing old object files for CC2538DK..."
 		rm -r $DIRECTORY_CC2538DK
 	fi
-	if [ -d "$DIRECTORY_OPENMODE" ]; then
+	if [ -d "$DIRECTORY_OPENMOTE" ]; then
 		echo "Removing old object files for OpenMote..."
-		rm -r $DIRECTORY_OPENMODE
+		rm -r $DIRECTORY_OPENMOTE
 	fi
 fi
 
@@ -30,6 +30,7 @@ make -j$THREADS BOARD=openmote-cc2538
 if [[ $? != 0 ]]; then
 	exit 255
 fi
+cp $DIRECTORY_OPENMOTE/coaps.elf coaps-riot-openmote.elf
 
 # Get size of new build
 OUTPUT_NEW="$(arm-none-eabi-size $DIRECTORY_CC2538DK/coaps.elf)"

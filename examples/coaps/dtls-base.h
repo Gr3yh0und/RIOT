@@ -30,6 +30,10 @@
 #include "coap.h"
 #endif
 
+#ifndef WITH_CONSOLE
+#define printf(...)
+#endif
+
 #define UDP_LOCAL_PORT 7778
 #define UDP_REMOTE_PORT 7777
 #define UDP_REMOTE_ADDRESS 	"fd00:dead:beef::1"
