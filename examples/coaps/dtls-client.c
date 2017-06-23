@@ -114,7 +114,7 @@ void *client_thread(void *arg){
 #else
 	// GET time
 	printf("Client with GET...\n");
-	static coap_resource_path_t resourcePath = {1, {"time"}};
+	static coap_resource_path_t resourcePath = {1, {"status"}};
 	static coap_resource_t request = {COAP_RDY, COAP_METHOD_GET, COAP_TYPE_CON, NULL, &resourcePath, COAP_SET_CONTENTTYPE(COAP_CONTENTTYPE_TXT_PLAIN)};
 	coap_make_request(messageId, NULL, &request, NULL, 0, &requestPacket);
 #endif
