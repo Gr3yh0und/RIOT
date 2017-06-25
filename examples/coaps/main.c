@@ -65,6 +65,7 @@ int main(void)
     printf("Done!\n");
 #endif
 
+#ifdef DEVELHELP
     // Print local IP address
     printf("Waiting for IP: ");
 	kernel_pid_t interface[GNRC_NETIF_NUMOF];
@@ -92,6 +93,7 @@ int main(void)
 			}
 		}
 	}
+#endif
 
 	// Start shell if configured or do autostart of application
 #ifdef RIOT_SHELL

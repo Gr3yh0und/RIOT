@@ -72,7 +72,7 @@ int get_psk_info(struct dtls_context_t *ctx,
 static session_t session;
 static conn_udp_t connection;
 static dtls_context_t *dtls_context;
-char client_thread_stack[THREAD_STACKSIZE_MAIN];
+char client_thread_stack[THREAD_STACKSIZE_DEFAULT];
 void client_thread_start(void);
 static msg_t _client_msg_queue[MAIN_QUEUE_SIZE];
 
