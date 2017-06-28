@@ -56,7 +56,7 @@ endif
 CFLAGS += -DWITH_RIOT_GNRC
 
 # NOTE: Minimize RAM usage
-CFLAGS += -DGNRC_PKTBUF_SIZE=512 -DGNRC_IPV6_NETIF_ADDR_NUMOF=6 -DGNRC_IPV6_NC_SIZE=5
+CFLAGS += -DGNRC_PKTBUF_SIZE=762 -DGNRC_IPV6_NETIF_ADDR_NUMOF=6 -DGNRC_IPV6_NC_SIZE=5
 
 #NOTE: Configure hard coded global IPv6 address if needed
 #IPV6_STATIC_LLADDR ?= '"fd00::212:4b00:430:5425"'
@@ -77,8 +77,8 @@ CFLAGS += -DWITH_CLIENT_PUT
 
 # Switch GPIO Output/Hardware
 #CFLAGS += -DHARDWARE_OPENMOTE
-#CFLAGS += -DGPIO_OUTPUT_ENABLE
-#CFLAGS += -DGPIO_OUTPUT_ENABLE_LEDS
+CFLAGS += -DGPIO_OUTPUT_ENABLE
+CFLAGS += -DGPIO_OUTPUT_ENABLE_LEDS
 
 # NOTE: Those are taken from TinyDTLS. As the original Makefiles are
 #      overwitten is a good idea to preserve them here.
@@ -87,7 +87,7 @@ CFLAGS += -DDTLSv12 -DWITH_SHA256 -DDTLS_PSK
 # NOTE: If enabled TinyDTLS' log are disabled (if memory is a issue).
 CFLAGS += -DNDEBUG
 #CFLAGS += -DYACOAP_DEBUG
-#CFLAGS += -DWITH_CONSOLE
+CFLAGS += -DWITH_CONSOLE
 CFLAGS += -DDEVELHELP
 
 # Change this to 0 show compiler invocation lines by default:
