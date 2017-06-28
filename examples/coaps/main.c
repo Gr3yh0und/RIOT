@@ -72,7 +72,7 @@ int main(void)
 	char ipAddress[IPV6_ADDR_MAX_STR_LEN];
 	ipv6_addr_t ipAddressTargetOpenmote;
 	ipv6_addr_t ipAddressTargetCc2538dk;
-	ipv6_addr_from_str(&ipAddressTargetOpenmote, "fd00::212:4b00:430:5425");
+	ipv6_addr_from_str(&ipAddressTargetOpenmote, "fd00::212:4b00:430:5416");
 	ipv6_addr_from_str(&ipAddressTargetCc2538dk, "fd00::212:4b00:615:a86b");
 	size_t numberOfInterfaces = gnrc_netif_get(interface);
 
