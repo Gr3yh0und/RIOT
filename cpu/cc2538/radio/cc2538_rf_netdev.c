@@ -305,7 +305,7 @@ static int _send(netdev_t *netdev, const struct iovec *vector, unsigned count)
 
 static int _recv(netdev_t *netdev, void *buf, size_t len, void *info)
 {
-	MEASUREMENT_RECEIVING_ON;
+	MEASUREMENT_READ_ON;
     size_t pkt_len;
 
     if (buf == NULL) {
@@ -315,7 +315,7 @@ static int _recv(netdev_t *netdev, void *buf, size_t len, void *info)
         /* Make sure pkt_len is sane */
         if (pkt_len > CC2538_RF_MAX_DATA_LEN) {
             RFCORE_SFR_RFST = ISFLUSHRX;
-            MEASUREMENT_RECEIVING_OFF;
+            MEASUREMENT_READ_OFF;
             return -EOVERFLOW;
         }
 
@@ -323,7 +323,7 @@ static int _recv(netdev_t *netdev, void *buf, size_t len, void *info)
         if (!(rfcore_peek_rx_fifo(pkt_len) & 0x80)) {
             /* CRC failed; discard packet */
             RFCORE_SFR_RFST = ISFLUSHRX;
-            MEASUREMENT_RECEIVING_OFF;
+            MEASUREMENT_READ_OFF;
             return -ENODATA;
         }
 
@@ -332,7 +332,7 @@ static int _recv(netdev_t *netdev, void *buf, size_t len, void *info)
             RFCORE_SFR_RFST = ISFLUSHRX;
         }
 
-        MEASUREMENT_RECEIVING_OFF;
+        MEASUREMENT_READ_OFF;
         return pkt_len - IEEE802154_FCS_LEN;
     }
     else {
@@ -375,7 +375,7 @@ static int _recv(netdev_t *netdev, void *buf, size_t len, void *info)
 
     RFCORE_SFR_RFST = ISFLUSHRX;
 
-    MEASUREMENT_RECEIVING_OFF;
+    MEASUREMENT_READ_OFF;
 
     return pkt_len;
 }
