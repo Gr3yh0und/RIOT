@@ -22,7 +22,7 @@ dtls_handler_t dtls_callback = {
 };
 
 /* Handler called when a new raw UDP packet is received */
-void onUdpPacket(dtls_context_t *ctx, gnrc_pktsnip_t *pkt)
+void read_packet(dtls_context_t *ctx, gnrc_pktsnip_t *pkt)
 {
 	MEASUREMENT_DTLS_READ_ON;
 

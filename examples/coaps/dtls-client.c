@@ -145,7 +145,7 @@ void *client_thread(void *arg){
 		counter++;
 #ifdef WITH_TINYDTLS
 		if (msg_try_receive(&msg) == 1) {
-			onUdpPacket(dtls_context, (gnrc_pktsnip_t *)(msg.content.ptr));
+			read_packet(dtls_context, (gnrc_pktsnip_t *)(msg.content.ptr));
 		}
 		if(counter == 175000){
 			//puts(".");
