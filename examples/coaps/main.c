@@ -34,9 +34,9 @@
 // application
 #include "measurement.h"
 
-#ifdef WITH_TINYDTLS
+
 #include "dtls-base.h"
-#endif
+
 
 #ifdef RIOT_SHELL
 #include "shell.h"

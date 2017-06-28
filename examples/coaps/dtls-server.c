@@ -37,6 +37,8 @@
 #include "dtls.h"
 #include "dtls_debug.h"
 #include "tinydtls.h"
+void *dtls_server_wrapper(void *arg);
+dtls_context_t *dtls_context = NULL;
 #endif
 
 /* YaCoap */
@@ -56,45 +58,163 @@
 #ifdef WITH_SERVER
 #include "dtls-base.h"
 
-// TinyDTLS
-#ifdef WITH_TINYDTLS
-/* TODO: MAke this local! */
-static dtls_context_t *dtls_context = NULL;
-
-static const unsigned char ecdsa_priv_key[] = {
-    0xD9, 0xE2, 0x70, 0x7A, 0x72, 0xDA, 0x6A, 0x05,
-    0x04, 0x99, 0x5C, 0x86, 0xED, 0xDB, 0xE3, 0xEF,
-    0xC7, 0xF1, 0xCD, 0x74, 0x83, 0x8F, 0x75, 0x70,
-    0xC8, 0x07, 0x2D, 0x0A, 0x76, 0x26, 0x1B, 0xD4
-};
-
-static const unsigned char ecdsa_pub_key_x[] = {
-    0xD0, 0x55, 0xEE, 0x14, 0x08, 0x4D, 0x6E, 0x06,
-    0x15, 0x59, 0x9D, 0xB5, 0x83, 0x91, 0x3E, 0x4A,
-    0x3E, 0x45, 0x26, 0xA2, 0x70, 0x4D, 0x61, 0xF2,
-    0x7A, 0x4C, 0xCF, 0xBA, 0x97, 0x58, 0xEF, 0x9A
-};
-
-static const unsigned char ecdsa_pub_key_y[] = {
-    0xB4, 0x18, 0xB6, 0x4A, 0xFE, 0x80, 0x30, 0xDA,
-    0x1D, 0xDC, 0xF4, 0xF4, 0x2E, 0x2F, 0x26, 0x31,
-    0xD0, 0x43, 0xB1, 0xFB, 0x03, 0xE2, 0x2F, 0x4D,
-    0x17, 0xDE, 0x43, 0xF9, 0xF9, 0xAD, 0xEE, 0x70
-};
-#endif
-
-/* YaCoap */
-#ifdef WITH_YACOAP
-extern void resource_setup(const coap_resource_t *resources);
-extern coap_resource_t resources[];
-#endif
-
 #define READER_QUEUE_SIZE (8U)
 static gnrc_netreg_entry_t server = GNRC_NETREG_ENTRY_INIT_PID(GNRC_NETREG_DEMUX_CTX_ALL, KERNEL_PID_UNDEF);
 char _server_stack[THREAD_STACKSIZE_MAIN + THREAD_EXTRA_STACKSIZE_PRINTF];
 static kernel_pid_t _dtls_kernel_pid;
 
+/* YaCoap */
+#ifdef WITH_YACOAP
+extern void resource_setup(const coap_resource_t *resources);
+extern coap_resource_t resources[];
+#endif // WITH_YACOAP
+
+/**
+ * @brief This will try to transmit using only GNRC stack (non-socket).
+ */
+static int gnrc_sending(char *addr_str, char *data, size_t data_len, unsigned short rem_port)
+{
+    ipv6_addr_t addr;
+    gnrc_pktsnip_t *payload, *udp, *ip;
+
+    /* parse destination address */
+    if (ipv6_addr_from_str(&addr, addr_str) == NULL) {
+        puts("Error: unable to parse destination address");
+        return -1;
+    }
+
+    payload = gnrc_pktbuf_add(NULL, data, data_len, GNRC_NETTYPE_UNDEF);
+
+    if (payload == NULL) {
+        puts("Error: unable to copy data to packet buffer");
+        return -1;
+    }
+
+    /* allocate UDP header */
+    udp = gnrc_udp_hdr_build(payload, DEFAULT_PORT, rem_port);
+    if (udp == NULL) {
+        puts("Error: unable to allocate UDP header");
+        gnrc_pktbuf_release(payload);
+        return -1;
+    }
+
+    /* allocate IPv6 header */
+    ip = gnrc_ipv6_hdr_build(udp, NULL, &addr);
+    if (ip == NULL) {
+        puts("Error: unable to allocate IPv6 header");
+        gnrc_pktbuf_release(udp);
+        return -1;
+    }
+    /* send packet */
+
+    DEBUG("DBG-Server: Sending record to peer\n");
+
+    /*
+     * WARNING: Too fast and the nodes dies in middle of retransmissions.
+     *         This issue appears in the FIT-Lab (m3 motes).
+     */
+    //xtimer_usleep(500000);
+
+    /* Probably this part will be removed.  **/
+    if (!gnrc_netapi_dispatch_send(GNRC_NETTYPE_UDP, GNRC_NETREG_DEMUX_CTX_ALL, ip)) {
+        puts("Error: unable to locate UDP thread");
+        gnrc_pktbuf_release(ip);
+        return -1;
+    }
+
+    return 1;
+}
+
+void *server_wrapper(void *arg){
+	msg_t msg;
+	while (1) {
+		msg_receive(&msg);
+		MEASUREMENT_DTLS_TOTAL_ON;
+		printf("Message received...\n");
+
+#ifdef WITH_YACOAP
+		coap_packet_t requestPacket, responsePacket;
+		uint8_t responseBuffer[DTLS_MAX_BUF];
+		size_t responseBufferLength = sizeof(responseBuffer);
+
+		// Get data from message
+		gnrc_pktsnip_t *pkt = msg.content.ptr;
+		gnrc_pktsnip_t *tmp2;
+
+		// Extract port
+		tmp2 = gnrc_pktsnip_search_type(pkt, GNRC_NETTYPE_UDP);
+		udp_hdr_t *udp = (udp_hdr_t *)tmp2->data;
+
+		// Extract ip address
+		tmp2 = gnrc_pktsnip_search_type(pkt, GNRC_NETTYPE_IPV6);
+		ipv6_hdr_t *hdr = (ipv6_hdr_t *)tmp2->data;
+		char addr_str[IPV6_ADDR_MAX_STR_LEN];
+		ipv6_addr_to_str(addr_str, &hdr->src, sizeof(addr_str));
+		MEASUREMENT_DTLS_READ_OFF;
+
+		if ((coap_parse(pkt->data, (unsigned int)pkt->size, &requestPacket)) < COAP_ERR)
+		{
+			// Get data from resources
+			coap_handle_request(resources, &requestPacket, &responsePacket);
+
+			// Build response packet
+			if ((coap_build(&responsePacket, responseBuffer, &responseBufferLength)) < COAP_ERR)
+			{
+				// Send response packet
+				MEASUREMENT_DTLS_WRITE_ON;
+				printf("Sending response...\n");
+				gnrc_sending(addr_str, (char*)responseBuffer, responseBufferLength, byteorder_ntohs(udp->src_port));
+				MEASUREMENT_DTLS_WRITE_OFF;
+			}
+		}
+#endif // WITH_YACOAP
+		MEASUREMENT_DTLS_TOTAL_OFF;
+
+	}
+}
+
+int server_thread_create(int argc, char **argv)
+{
+    uint16_t port;
+    port = (uint16_t)DEFAULT_PORT;
+    (void) _dtls_kernel_pid;
+
+    /* Only one instance of the server */
+    if (server.target.pid != KERNEL_PID_UNDEF) {
+        printf("Error: server already running\n");
+        return 1;
+    }
+
 #ifdef WITH_TINYDTLS
+    dtls_init();
+
+    /* The server is initialized  */
+    server.target.pid = thread_create(_server_stack, sizeof(_server_stack),
+                               THREAD_PRIORITY_MAIN - 1,
+                               THREAD_CREATE_STACKTEST,
+                               dtls_server_wrapper, NULL, "DTLS CoAP Server");
+#else
+    /* The server is initialized  */
+	server.target.pid = thread_create(_server_stack, sizeof(_server_stack),
+							   THREAD_PRIORITY_MAIN - 1,
+							   THREAD_CREATE_STACKTEST,
+							   server_wrapper, NULL, "CoAP Server");
+#endif
+
+    server.demux_ctx = (uint32_t)port;
+
+    if (gnrc_netreg_register(GNRC_NETTYPE_UDP, &server) == 0){
+    	printf("Success: started server on port %" PRIu16 "\n", port);
+    	return 0;
+    }else{
+    	printf("FAILURE: The UDP port is not registered!\n");
+    	return 1;
+    }
+}
+
+// TinyDTLS
+#ifdef WITH_TINYDTLS
+
 /**
  * @brief This care about getting messages and continue with the DTLS flights
  */
@@ -156,69 +276,11 @@ static int read_from_peer(struct dtls_context_t *context, session_t *session, ui
 			MEASUREMENT_DTLS_WRITE_OFF;
 		}
 	}
-#endif
+#endif // WITH_YACOAP
 
 	return 0;
 }
-#endif
 
-/**
- * @brief This will try to transmit using only GNRC stack (non-socket).
- */
-static int gnrc_sending(char *addr_str, char *data, size_t data_len, unsigned short rem_port )
-{
-    ipv6_addr_t addr;
-    gnrc_pktsnip_t *payload, *udp, *ip;
-
-    /* parse destination address */
-    if (ipv6_addr_from_str(&addr, addr_str) == NULL) {
-        puts("Error: unable to parse destination address");
-        return -1;
-    }
-
-    payload = gnrc_pktbuf_add(NULL, data, data_len, GNRC_NETTYPE_UNDEF);
-
-    if (payload == NULL) {
-        puts("Error: unable to copy data to packet buffer");
-        return -1;
-    }
-
-    /* allocate UDP header */
-    udp = gnrc_udp_hdr_build(payload, DEFAULT_PORT, rem_port);
-    if (udp == NULL) {
-        puts("Error: unable to allocate UDP header");
-        gnrc_pktbuf_release(payload);
-        return -1;
-    }
-
-    /* allocate IPv6 header */
-    ip = gnrc_ipv6_hdr_build(udp, NULL, &addr);
-    if (ip == NULL) {
-        puts("Error: unable to allocate IPv6 header");
-        gnrc_pktbuf_release(udp);
-        return -1;
-    }
-    /* send packet */
-
-    DEBUG("DBG-Server: Sending record to peer\n");
-
-    /*
-     * WARNING: Too fast and the nodes dies in middle of retransmissions.
-     *         This issue appears in the FIT-Lab (m3 motes).
-     */
-    //xtimer_usleep(500000);
-
-    /* Probably this part will be removed.  **/
-    if (!gnrc_netapi_dispatch_send(GNRC_NETTYPE_UDP, GNRC_NETREG_DEMUX_CTX_ALL, ip)) {
-        puts("Error: unable to locate UDP thread");
-        gnrc_pktbuf_release(ip);
-        return -1;
-    }
-
-    return 1;
-}
-
-#ifdef WITH_TINYDTLS
 /**
  * @brief We communicate with the other peer.
  */
@@ -348,7 +410,7 @@ void *dtls_server_wrapper(void *arg)
 	printf("Allocating CoAP resources...");
 	resource_setup(resources);
 	printf(" Done!\n");
-#endif
+#endif // WITH_YACOAP
 
 	/*
 	 * The context for the server is a little different from the client.
@@ -384,79 +446,11 @@ void *dtls_server_wrapper(void *arg)
 
         DEBUG("DBG-Server: Record Rcvd!\n");
         dtls_handle_read(dtls_context, (gnrc_pktsnip_t *)(msg.content.ptr));
+        gnrc_pktbuf_release(msg.content.ptr);
     }
 
     dtls_free_context(dtls_context);
 }
-#endif
+#endif // WITH_TINYDTLS
 
-int server_thread_create(int argc, char **argv)
-{
-    uint16_t port;
-    port = (uint16_t)DEFAULT_PORT;
-    (void) _dtls_kernel_pid;
-
-    /* Only one instance of the server */
-    if (server.target.pid != KERNEL_PID_UNDEF) {
-        printf("Error: server already running\n");
-        return 1;
-    }
-
-#ifdef WITH_TINYDTLS
-    dtls_init();
-#endif
-
-    /* The server is initialized  */
-    server.target.pid = thread_create(_server_stack, sizeof(_server_stack),
-                               THREAD_PRIORITY_MAIN - 1,
-                               THREAD_CREATE_STACKTEST,
-                               dtls_server_wrapper, NULL, "DTLS Server");
-
-    server.demux_ctx = (uint32_t)port;
-
-    if (gnrc_netreg_register(GNRC_NETTYPE_UDP, &server) == 0){
-    	printf("Success: started DTLS server on port %" PRIu16 "\n", port);
-    	return 0;
-    }else{
-    	printf("FAILURE: The UDP port is not registered!\n");
-    	return 1;
-    }
-}
-
-static void server_thread_stop(void)
-{
-    /* check if server is running at all */
-    if (server.target.pid == KERNEL_PID_UNDEF) {
-        printf("Error: server was not running\n");
-        return;
-    }
-
-#ifdef WITH_TINYDTLS
-    dtls_free_context(dtls_context);
-#endif
-
-    /* stop server */
-    gnrc_netreg_unregister(GNRC_NETTYPE_UDP, &server);
-    server.target.pid = KERNEL_PID_UNDEF;
-    puts("Success: stopped DTLS server");
-}
-
-int udp_server_cmd(int argc, char **argv)
-{
-    if (argc < 2) {
-        printf("usage: %s start|stop\n", argv[0]);
-        return 1;
-    }
-    if (strcmp(argv[1], "start") == 0) {
-    	server_thread_create(0, NULL);
-    }
-    else if (strcmp(argv[1], "stop") == 0) {
-        server_thread_stop();
-    }
-    else {
-        puts("error: invalid command");
-    }
-    return 0;
-}
-
-#endif
+#endif // WITH_SERVER

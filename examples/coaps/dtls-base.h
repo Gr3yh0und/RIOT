@@ -16,14 +16,15 @@
 #include "measurement.h"
 
 #ifdef WITH_TINYDTLS
+#include "dtls.h"
+#include "dtls_debug.h"
+#endif
+
 #ifdef WITH_SERVER
 #include "dtls-server.h"
 #endif
 #ifdef WITH_CLIENT
 #include "dtls-client.h"
-#endif
-#include "dtls.h"
-#include "dtls_debug.h"
 #endif
 
 #ifdef WITH_YACOAP
