@@ -190,6 +190,8 @@ void measurement_init_gpio(void);
 #define DIO9_OFF
 #define DIO10_ON
 #define DIO10_OFF
+#define DIO11_ON
+#define DIO11_OFF
 #define KEY_LEFT_ON     M_GPIO_SET_PIN(M_GPIO_C_BASE, KEY_LEFT_MASK)
 #define KEY_LEFT_OFF    M_GPIO_CLEAR_PIN(M_GPIO_C_BASE, KEY_LEFT_MASK)
 #define KEY_RIGHT_ON    M_GPIO_SET_PIN(M_GPIO_C_BASE, KEY_RIGHT_MASK)
@@ -251,6 +253,8 @@ void measurement_init_gpio(void);
 #define DIO9_OFF
 #define DIO10_ON
 #define DIO10_OFF
+#define DIO11_ON
+#define DIO11_OFF
 #define DIOS_ON
 #define DIOS_OFF
 #define KEY_LEFT_ON
@@ -298,6 +302,7 @@ void measurement_init_gpio(void);
 #define MEASUREMENT_DTLS_TOTAL_OFF  DIO8_OFF
 #endif
 
+// Non LED Pins
 #define MEASUREMENT_DTLS_WRITE_ON   KEY_LEFT_ON;DIO9_ON;
 #define MEASUREMENT_DTLS_WRITE_OFF  KEY_LEFT_OFF;DIO9_OFF;
 #define MEASUREMENT_DTLS_READ_ON    KEY_RIGHT_ON;DIO10_ON;
@@ -307,7 +312,6 @@ void measurement_init_gpio(void);
 #define MEASUREMENT_TRANSMIT_ON     KEY_DOWN_ON
 #define MEASUREMENT_TRANSMIT_OFF    KEY_DOWN_OFF
 
-#endif
 
 #ifdef __cplusplus
 } // end extern "C"
