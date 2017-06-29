@@ -76,7 +76,6 @@ void *server_wrapper(void *arg){
 		ipv6_hdr_t *hdr = (ipv6_hdr_t *) snippet->data;
 		char addr_str[IPV6_ADDR_MAX_STR_LEN];
 		ipv6_addr_to_str(addr_str, &hdr->src, sizeof(addr_str));
-		MEASUREMENT_DTLS_READ_OFF;
 
 		if ((coap_parse(message->data, (unsigned int) message->size, &requestPacket)) < COAP_ERR)
 		{

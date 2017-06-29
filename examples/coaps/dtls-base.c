@@ -90,6 +90,7 @@ int handle_write(struct dtls_context_t *dtls_context, session_t *session, uint8 
  */
 int handle_read(struct dtls_context_t *dtls_context, session_t *session, uint8 *data, size_t length)
 {
+
 #ifdef WITH_YACOAP
 	// Server
 #ifdef WITH_SERVER
