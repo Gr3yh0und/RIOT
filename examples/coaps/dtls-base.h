@@ -35,7 +35,7 @@
 #define printf(...)
 #endif
 
-#define UDP_LOCAL_PORT 		7778
+#define UDP_LOCAL_PORT 		6666
 #define UDP_REMOTE_PORT 	7777
 #define UDP_REMOTE_ADDRESS 	"fd00:dead:beef::1"
 
@@ -43,7 +43,7 @@
 #define MAIN_QUEUE_SIZE     (16)
 
 #ifndef DTLS_MAX_BUF
-#define DTLS_MAX_BUF 100
+#define DTLS_MAX_BUF 		100
 #endif
 
 // YaCoAP variables
@@ -81,5 +81,6 @@ extern int get_psk_info(struct dtls_context_t *ctx,
                         const unsigned char *id, size_t id_len,
                         unsigned char *result, size_t result_length);
 #endif
+int send_packet(char *peerIpString, char *data, size_t dataLength, unsigned short peerPort);
 
 #endif /* EXAMPLES_COAPS_DTLS_BASE_H_ */

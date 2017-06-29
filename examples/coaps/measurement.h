@@ -307,7 +307,6 @@ void measurement_init_gpio(void);
 #define MEASUREMENT_TRANSMIT_ON     KEY_DOWN_ON
 #define MEASUREMENT_TRANSMIT_OFF    KEY_DOWN_OFF
 
-#endif
 
 #ifdef __cplusplus
 } // end extern "C"
