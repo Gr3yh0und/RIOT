@@ -1,8 +1,11 @@
 /*
  * dtls_base.h
  *
+ *  Base class for DTLS client and server connections
+ *  Partly based on the RIOT DTLS example by Raul Fuentes
+ *
  *  Created on: 15 Jun 2017
- *      Author: gr3yh0und
+ *      Author: Michael Morscher, morscher@hm.edu
  */
 
 #ifndef EXAMPLES_COAPS_DTLS_BASE_H_
@@ -35,13 +38,14 @@
 #define printf(...)
 #endif
 
+// Definition of server ip address and ports
 #define UDP_LOCAL_PORT 		6666
 #define UDP_REMOTE_PORT 	7777
 #define UDP_REMOTE_ADDRESS 	"fd00:dead:beef::1"
 
+// DTLS configuration
 #define DTLS_DEBUG_LEVEL 	DTLS_LOG_DEBUG
 #define MAIN_QUEUE_SIZE     (16)
-
 #ifndef DTLS_MAX_BUF
 #define DTLS_MAX_BUF 		100
 #endif
@@ -69,7 +73,7 @@ extern coap_resource_t resources[];
 #define DTLS_PSK_KEY_VALUE_LENGTH 9
 #endif
 
-// DTLS functions
+// Functions used by secure client and server
 #ifdef WITH_TINYDTLS
 void read_packet(dtls_context_t *ctx, gnrc_pktsnip_t *pkt);
 int handle_write(struct dtls_context_t *ctx, session_t *session, uint8 *data, size_t len);
@@ -80,7 +84,9 @@ extern int get_psk_info(struct dtls_context_t *ctx,
                         dtls_credentials_type_t type,
                         const unsigned char *id, size_t id_len,
                         unsigned char *result, size_t result_length);
-#endif
+#endif // WITH_TINYDTLS
+
+// Function used by insecure server
 int send_packet(char *peerIpString, char *data, size_t dataLength, unsigned short peerPort);
 
 #endif /* EXAMPLES_COAPS_DTLS_BASE_H_ */

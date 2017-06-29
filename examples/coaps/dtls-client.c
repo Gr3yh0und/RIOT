@@ -1,5 +1,8 @@
 /*
- * dtls-client.c
+ * dtls_client.c
+ *
+ *  Client specific implementation
+ *  Partly based on the RIOT DTLS example by Raul Fuentes
  *
  *  Created on: 21 May 2017
  *      Author: Michael Morscher, morscher@hm.edu
@@ -12,7 +15,6 @@
 #define PSK_DEFAULT_KEY      DTLS_PSK_KEY_VALUE
 #define PSK_OPTIONS          "i:k:"
 
-/* Max size for PSK lowered for embedded devices */
 #define PSK_ID_MAXLEN 32
 #define PSK_MAXLEN 32
 
@@ -34,7 +36,6 @@ int get_psk_info(struct dtls_context_t *ctx,
                         const unsigned char *id, size_t id_len,
                         unsigned char *result, size_t result_length)
 {
-
     switch (type) {
         case DTLS_PSK_IDENTITY:
                if (id_len) {
@@ -119,6 +120,7 @@ void *client_thread(void *arg){
 	coap_make_request(messageId, NULL, &request, NULL, 0, &requestPacket);
 #endif
 
+	// Create CoAP packet
 	coap_build(&requestPacket, buffer, &bufferLength);
 #endif
 
@@ -145,13 +147,15 @@ void *client_thread(void *arg){
 		counter++;
 #ifdef WITH_TINYDTLS
 		if (msg_try_receive(&msg) == 1) {
+
+			// Hand over packet when received
 			read_packet(dtls_context, (gnrc_pktsnip_t *)(msg.content.ptr));
 			gnrc_pktbuf_release(msg.content.ptr);
 		}
 		if(counter == 175000){
-			//puts(".");
 			MEASUREMENT_DTLS_TOTAL_ON;
 			MEASUREMENT_DTLS_WRITE_ON;
+			// Start client connection
 			dtls_write(dtls_context, &session, buffer, bufferLength);
 			MEASUREMENT_DTLS_WRITE_OFF;
 			counter = 0;

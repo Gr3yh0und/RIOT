@@ -11,6 +11,7 @@
 #include "dtls-base.h"
 
 #ifdef WITH_TINYDTLS
+
 /* Definition of executed handlers */
 dtls_handler_t dtls_callback = {
   .write = handle_write,
@@ -71,8 +72,11 @@ int handle_write(struct dtls_context_t *dtls_context, session_t *session, uint8 
 {
 	(void) dtls_context;
 	(void) session;
+
+	// Convert remote IP address to string
 	char ipAddress[IPV6_ADDR_MAX_STR_LEN];
 	ipv6_addr_to_str(ipAddress, &session->addr, IPV6_ADDR_MAX_STR_LEN);
+
 	return send_packet(ipAddress, (char*) data, length, session->port);
 }
 
@@ -86,7 +90,6 @@ int handle_write(struct dtls_context_t *dtls_context, session_t *session, uint8 
  */
 int handle_read(struct dtls_context_t *dtls_context, session_t *session, uint8 *data, size_t length)
 {
-
 #ifdef WITH_YACOAP
 	// Server
 #ifdef WITH_SERVER
@@ -140,11 +143,11 @@ int handle_event(struct dtls_context_t *dtls_context, session_t *session, dtls_a
 
 #ifndef NDEBUG
 	if (code == DTLS_EVENT_CONNECTED) {
-		dtls_debug("EVENT Connected!\n");
+		dtls_debug("Event: Connected!\n");
 	}else if (code == DTLS_EVENT_CONNECT){
-		dtls_debug("EVENT Connecting...\n");
+		dtls_debug("Event: Connecting...\n");
 	}else{
-		dtls_debug("EVENT Other event occurred!\n");
+		dtls_debug("Event: Other event occurred!\n");
 	}
 #endif
 
@@ -167,7 +170,6 @@ int handle_event(struct dtls_context_t *dtls_context, session_t *session, dtls_a
 int send_packet(char *peerIpString, char *data, size_t dataLength, unsigned short peerPort)
 {
 	MEASUREMENT_DTLS_WRITE_ON;
-
     ipv6_addr_t peerIp;
     gnrc_pktsnip_t *packetPayload, *packetUdp, *packetIp;
 

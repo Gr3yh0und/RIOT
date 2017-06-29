@@ -33,11 +33,9 @@
 
 // application
 #include "measurement.h"
-
-
 #include "dtls-base.h"
 
-
+// if examples is run with shell
 #ifdef RIOT_SHELL
 #include "shell.h"
 static const shell_command_t shell_commands[] = {
@@ -65,15 +63,14 @@ int main(void)
     printf("Done!\n");
 #endif
 
-#ifdef DEVELHELP
-    // Print local IP address
+    // Print local IP address and delay until IP address is available on the network stack
     printf("Waiting for IP: ");
 	kernel_pid_t interface[GNRC_NETIF_NUMOF];
 	char ipAddress[IPV6_ADDR_MAX_STR_LEN];
 	ipv6_addr_t ipAddressTargetOpenmote;
 	ipv6_addr_t ipAddressTargetCc2538dk;
-	ipv6_addr_from_str(&ipAddressTargetOpenmote, "fd00::212:4b00:430:5416");
-	ipv6_addr_from_str(&ipAddressTargetCc2538dk, "fd00::212:4b00:615:a86b");
+	ipv6_addr_from_str(&ipAddressTargetOpenmote, "fd00::212:4b00:430:5416");	// OpenMote
+	ipv6_addr_from_str(&ipAddressTargetCc2538dk, "fd00::212:4b00:615:a86b");	// CC2538DK
 	size_t numberOfInterfaces = gnrc_netif_get(interface);
 
 	// Ensure existing interface
@@ -93,9 +90,8 @@ int main(void)
 			}
 		}
 	}
-#endif
 
-	// Start shell if configured or do autostart of application
+	// Start shell if configured or do autostart of application (either client or server)
 #ifdef RIOT_SHELL
     char line_buf[SHELL_DEFAULT_BUFSIZE];
     shell_run(shell_commands, line_buf, SHELL_DEFAULT_BUFSIZE);
@@ -104,7 +100,7 @@ int main(void)
     server_thread_create(0, NULL);
 #endif
 #ifdef WITH_CLIENT
-    // Wait for certain amount to debounce start up period
+    // Wait for certain amount to debounce start up period - sometimes needed for receiving routing packets
 	xtimer_sleep(4);
     client_thread_create(0, NULL);
 #endif
