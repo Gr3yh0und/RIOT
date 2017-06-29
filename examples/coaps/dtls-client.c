@@ -11,17 +11,13 @@
 #include "dtls-client.h"
 
 #if defined(DTLS_PSK) && defined(WITH_TINYDTLS) && defined(WITH_CLIENT)
-#define PSK_DEFAULT_IDENTITY DTLS_IDENTITY_HINT
-#define PSK_DEFAULT_KEY      DTLS_PSK_KEY_VALUE
-#define PSK_OPTIONS          "i:k:"
-
 #define PSK_ID_MAXLEN 32
 #define PSK_MAXLEN 32
 
-static unsigned char psk_id[PSK_ID_MAXLEN] = PSK_DEFAULT_IDENTITY;
-static size_t psk_id_length = sizeof(PSK_DEFAULT_IDENTITY) - 1;
-static unsigned char psk_key[PSK_MAXLEN] = PSK_DEFAULT_KEY;
-static size_t psk_key_length = sizeof(PSK_DEFAULT_KEY) - 1;
+static unsigned char psk_id[PSK_ID_MAXLEN] = DTLS_IDENTITY_HINT;
+static size_t psk_id_length = sizeof(DTLS_IDENTITY_HINT) - 1;
+static unsigned char psk_key[PSK_MAXLEN] = DTLS_PSK_KEY_VALUE;
+static size_t psk_key_length = sizeof(DTLS_PSK_KEY_VALUE) - 1;
 
 extern dtls_handler_t dtls_callback;
 

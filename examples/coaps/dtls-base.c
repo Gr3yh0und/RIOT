@@ -4,7 +4,7 @@
  *  Base class for DTLS client and server connections
  *  Partly based on the RIOT DTLS example by Raul Fuentes
  *
- *  Created on: 15 Jun 2017
+ *  Created on: 21 May 2017
  *      Author: Michael Morscher, morscher@hm.edu
  */
 

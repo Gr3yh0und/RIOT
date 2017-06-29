@@ -24,13 +24,6 @@
 #include "xtimer.h"
 #include "thread.h"
 
-// networking
-#include "msg.h"
-#include "net/af.h"
-#include "net/conn/udp.h"
-#include "net/ipv6/addr.h"
-#include "net/gnrc/ipv6/netif.h"
-
 // application
 #include "measurement.h"
 #include "dtls-base.h"
@@ -78,11 +71,15 @@ int main(void)
 
 		// Wait until valid IP address is assigned
 		while(1){
+
+			// OpenMote
 			if(ipv6_addr_equal(gnrc_ipv6_netif_find_addr(interface[0], &ipAddressTargetOpenmote), &ipAddressTargetOpenmote)){
 				ipv6_addr_to_str(ipAddress, &ipAddressTargetOpenmote, IPV6_ADDR_MAX_STR_LEN);
 				printf("%s\n", ipAddress);
 				break;
 			}
+
+			// CC2538DK
 			if(ipv6_addr_equal(gnrc_ipv6_netif_find_addr(interface[0], &ipAddressTargetCc2538dk), &ipAddressTargetCc2538dk)){
 				ipv6_addr_to_str(ipAddress, &ipAddressTargetCc2538dk, IPV6_ADDR_MAX_STR_LEN);
 				printf("%s\n", ipAddress);

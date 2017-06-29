@@ -1,5 +1,8 @@
 /*
- * dtls-server.h
+ * dtls_server.h
+ *
+ *  Server specific implementation
+ *  Partly based on the RIOT DTLS example by Raul Fuentes
  *
  *  Created on: 16 May 2017
  *      Author: Michael Morscher, morscher@hm.edu

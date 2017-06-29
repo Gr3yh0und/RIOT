@@ -25,6 +25,7 @@ make -j$THREADS BOARD=cc2538dk
 if [[ $? != 0 ]]; then
 	exit 255
 fi
+cp $DIRECTORY_CC2538DK/coaps.bin coaps-riot-cc2538dk.bin
 echo "For OpenMote:"
 make -j$THREADS BOARD=openmote-cc2538
 if [[ $? != 0 ]]; then
