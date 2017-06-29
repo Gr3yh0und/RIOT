@@ -8,13 +8,12 @@
 #ifndef EXAMPLES_COAPS_DTLS_SERVER_H_
 #define EXAMPLES_COAPS_DTLS_SERVER_H_
 
+#include "dtls-base.h"
+
 #ifdef WITH_SERVER
 int server_thread_create(int argc, char **argv);
 
 #if defined(WITH_TINYDTLS) && defined(DTLS_PSK)
-#include "dtls-base.h"
-#include "dtls.h"
-
 int get_psk_info(struct dtls_context_t *ctx, const session_t *session,
 						 dtls_credentials_type_t type,
 						 const unsigned char *id, size_t id_len,
