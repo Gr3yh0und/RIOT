@@ -394,6 +394,8 @@ static int _init(netdev_t *netdev)
     uint16_t chan = cc2538_get_chan();
     uint16_t addr_short = cc2538_get_addr_short();
     uint64_t addr_long = cc2538_get_addr_long();
+    bool autoack = true;
+    bool req_ack = true;
 
     /* Initialise netdev_ieee802154_t struct */
     netdev_ieee802154_set((netdev_ieee802154_t *)netdev, NETOPT_NID, &pan,
@@ -404,6 +406,10 @@ static int _init(netdev_t *netdev)
                           &addr_short, sizeof(addr_short));
     netdev_ieee802154_set((netdev_ieee802154_t *)netdev, NETOPT_ADDRESS_LONG,
                           &addr_long, sizeof(addr_long));
+    netdev_ieee802154_set((netdev_ieee802154_t *)netdev, NETOPT_AUTOACK,
+                          &autoack, sizeof(autoack));
+    netdev_ieee802154_set((netdev_ieee802154_t *)netdev, NETOPT_ACK_REQ,
+                          &req_ack, sizeof(req_ack));
 
     cc2538_set_state(dev, NETOPT_STATE_IDLE);
 
