@@ -23,43 +23,6 @@ dtls_handler_t dtls_callback = {
 };
 
 /**
- * Handler called when a new raw UDP packet is received
- * @param dtls_context: Pointer to DTLS context
- * @param packet: Pointer to incoming message
- */
-void read_packet(dtls_context_t *dtls_context, gnrc_pktsnip_t *packet)
-{
-	MEASUREMENT_DTLS_READ_ON;
-
-	session_t session;
-	char ipAddress[IPV6_ADDR_MAX_STR_LEN];
-	gnrc_pktsnip_t *snippet;
-
-	// Get remote IPv6 address
-	snippet = gnrc_pktsnip_search_type(packet, GNRC_NETTYPE_IPV6);
-	ipv6_hdr_t *ipHeader = (ipv6_hdr_t *)snippet->data;
-	ipv6_addr_to_str(ipAddress, &ipHeader->src, sizeof(ipAddress));
-#ifdef WITH_SERVER
-	dtls_context->app = ipAddress;
-#endif
-
-	// Get remote UDP port
-	snippet = gnrc_pktsnip_search_type(packet, GNRC_NETTYPE_UDP);
-	udp_hdr_t *udpHeader = (udp_hdr_t *)snippet->data;
-
-	// Create session object
-	dtls_session_init(&session);
-	session.size = sizeof(ipv6_addr_t);
-	session.port = byteorder_ntohs(udpHeader->src_port);
-	ipv6_addr_from_str(&session.addr, ipAddress);
-
-	MEASUREMENT_DTLS_READ_OFF;
-
-	// Handle in tinyDTLS
-	dtls_handle_message(dtls_context, &session, packet->data, (unsigned int) packet->size);
-}
-
-/**
  * Automatically called handler function when a new raw packet should be sent
  * @param dtls_context: Pointer to DTLS context
  * @param session: Pointer to current session object (with peer)
@@ -141,7 +104,6 @@ int handle_read(struct dtls_context_t *dtls_context, session_t *session, uint8 *
  */
 int handle_event(struct dtls_context_t *dtls_context, session_t *session, dtls_alert_level_t level, unsigned short code)
 {
-
 #ifndef NDEBUG
 	if (code == DTLS_EVENT_CONNECTED) {
 		dtls_debug("Event: Connected!\n");
@@ -160,6 +122,7 @@ int handle_event(struct dtls_context_t *dtls_context, session_t *session, dtls_a
 }
 #endif // WITH_TINYDTLS
 
+#if defined(WITH_CLIENT) || defined(WITH_SERVER)
 /**
  * Transmits a packet with given data to a given address/port
  * @param addr_str: Pointer to IP address as character
@@ -214,3 +177,76 @@ int send_packet(char *peerIpString, char *data, size_t dataLength, unsigned shor
     MEASUREMENT_DTLS_WRITE_OFF;
     return dataLength;
 }
+
+/**
+ * Handler called when a new raw UDP packet is received
+ * @param dtls_context: Pointer to DTLS context
+ * @param packet: Pointer to incoming message
+ */
+void read_packet(dtls_context_t *dtls_context, gnrc_pktsnip_t *packet)
+{
+	MEASUREMENT_DTLS_READ_ON;
+
+	session_t session;
+	char ipAddress[IPV6_ADDR_MAX_STR_LEN];
+	gnrc_pktsnip_t *snippet;
+
+	// Get remote IPv6 address
+	snippet = gnrc_pktsnip_search_type(packet, GNRC_NETTYPE_IPV6);
+	ipv6_hdr_t *ipHeader = (ipv6_hdr_t *)snippet->data;
+	ipv6_addr_to_str(ipAddress, &ipHeader->src, sizeof(ipAddress));
+#ifdef WITH_SERVER
+	dtls_context->app = ipAddress;
+#endif
+
+	// Get remote UDP port
+	snippet = gnrc_pktsnip_search_type(packet, GNRC_NETTYPE_UDP);
+	udp_hdr_t *udpHeader = (udp_hdr_t *)snippet->data;
+
+	// Create session object
+	dtls_session_init(&session);
+	session.size = sizeof(ipv6_addr_t);
+	session.port = byteorder_ntohs(udpHeader->src_port);
+	ipv6_addr_from_str(&session.addr, ipAddress);
+
+	MEASUREMENT_DTLS_READ_OFF;
+
+#ifdef WITH_TINYDTLS
+	// Handle in tinyDTLS
+	dtls_handle_message(dtls_context, &session, packet->data, (unsigned int) packet->size);
+#else
+	// Handle insecure CoAP request
+	handle_message(packet, session);
+#endif
+}
+
+/**
+ * @brief Handle incoming message for insecure CoAP Server
+ */
+void handle_message(gnrc_pktsnip_t *message, session_t *session)
+{
+#ifdef WITH_YACOAP
+	coap_packet_t requestPacket, responsePacket;
+	uint8_t responseBuffer[DTLS_MAX_BUF];
+	size_t responseBufferLength = sizeof(responseBuffer);
+
+	char addr_str[IPV6_ADDR_MAX_STR_LEN];
+	ipv6_addr_to_str(addr_str, &session->addr, sizeof(addr_str));
+
+	// Parse received packet for CoAP request
+	if ((coap_parse(message->data, (unsigned int) message->size, &requestPacket)) < COAP_ERR)
+	{
+		// Get data from resources
+		coap_handle_request(resources, &requestPacket, &responsePacket);
+
+		// Build response packet
+		if ((coap_build(&responsePacket, responseBuffer, &responseBufferLength)) < COAP_ERR)
+		{
+			// Send response packet
+			printf("Sending response...\n");
+			send_packet(addr_str, (char*) responseBuffer, responseBufferLength, session->port);
+		}
+	}
+#endif // WITH_YACOAP
+}
+#endif
