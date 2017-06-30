@@ -61,8 +61,10 @@ int main(void)
 	kernel_pid_t interface[GNRC_NETIF_NUMOF];
 	char ipAddress[IPV6_ADDR_MAX_STR_LEN];
 	ipv6_addr_t ipAddressTargetOpenmote;
+	ipv6_addr_t ipAddressTargetOpenmote2;
 	ipv6_addr_t ipAddressTargetCc2538dk;
 	ipv6_addr_from_str(&ipAddressTargetOpenmote, "fd00::212:4b00:430:5416");	// OpenMote
+	ipv6_addr_from_str(&ipAddressTargetOpenmote2, "fd00::212:4b00:430:5425");	// OpenMote2
 	ipv6_addr_from_str(&ipAddressTargetCc2538dk, "fd00::212:4b00:615:a86b");	// CC2538DK
 	size_t numberOfInterfaces = gnrc_netif_get(interface);
 
@@ -75,6 +77,13 @@ int main(void)
 			// OpenMote
 			if(ipv6_addr_equal(gnrc_ipv6_netif_find_addr(interface[0], &ipAddressTargetOpenmote), &ipAddressTargetOpenmote)){
 				ipv6_addr_to_str(ipAddress, &ipAddressTargetOpenmote, IPV6_ADDR_MAX_STR_LEN);
+				printf("%s\n", ipAddress);
+				break;
+			}
+
+			// OpenMote 2
+			if(ipv6_addr_equal(gnrc_ipv6_netif_find_addr(interface[0], &ipAddressTargetOpenmote2), &ipAddressTargetOpenmote2)){
+				ipv6_addr_to_str(ipAddress, &ipAddressTargetOpenmote2, IPV6_ADDR_MAX_STR_LEN);
 				printf("%s\n", ipAddress);
 				break;
 			}
