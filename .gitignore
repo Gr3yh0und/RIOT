@@ -53,3 +53,7 @@ burn\.seg
 examples/coaps/build\.old
 
 examples/coaps/coaps-riot-openmote\.elf
+
+examples/coaps/coaps-riot-cc2538dk\.map
+
+examples/coaps/coaps-riot-openmote\.map

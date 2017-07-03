@@ -26,12 +26,14 @@ if [[ $? != 0 ]]; then
 	exit 255
 fi
 cp $DIRECTORY_CC2538DK/coaps.bin coaps-riot-cc2538dk.bin
+cp $DIRECTORY_CC2538DK/coaps.map coaps-riot-cc2538dk.map
 echo "For OpenMote:"
 make -j$THREADS BOARD=openmote-cc2538
 if [[ $? != 0 ]]; then
 	exit 255
 fi
 cp $DIRECTORY_OPENMOTE/coaps.elf coaps-riot-openmote.elf
+cp $DIRECTORY_OPENMOTE/coaps.map coaps-riot-openmote.map
 
 # Get size of new build
 OUTPUT_NEW="$(arm-none-eabi-size $DIRECTORY_CC2538DK/coaps.elf)"
