@@ -57,6 +57,7 @@ CFLAGS += -DWITH_RIOT_GNRC
 
 # NOTE: Minimize RAM usage
 CFLAGS += -DGNRC_PKTBUF_SIZE=1024 -DGNRC_IPV6_NETIF_ADDR_NUMOF=6 -DGNRC_IPV6_NC_SIZE=5
+#CFLAGS += -DWITH_802154_ACK
 
 #NOTE: Configure hard coded global IPv6 address if needed
 #IPV6_STATIC_LLADDR ?= '"fd00::212:4b00:430:5425"'
@@ -71,14 +72,14 @@ USEPKG += yacoap
 CFLAGS += -DWITH_YACOAP
 
 # Switch between UDP Client and Server
-CFLAGS += -DWITH_CLIENT
-CFLAGS += -DWITH_CLIENT_PUT
-#CFLAGS += -DWITH_SERVER
+#CFLAGS += -DWITH_CLIENT
+#CFLAGS += -DWITH_CLIENT_PUT
+CFLAGS += -DWITH_SERVER
 
 # Switch GPIO Output/Hardware
 #CFLAGS += -DHARDWARE_OPENMOTE
 CFLAGS += -DGPIO_OUTPUT_ENABLE
-CFLAGS += -DGPIO_OUTPUT_ENABLE_LEDS
+#CFLAGS += -DGPIO_OUTPUT_ENABLE_LEDS
 
 # NOTE: Those are taken from TinyDTLS. As the original Makefiles are
 #      overwitten is a good idea to preserve them here.
