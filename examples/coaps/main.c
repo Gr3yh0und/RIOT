@@ -33,10 +33,14 @@
 #include "shell.h"
 static const shell_command_t shell_commands[] = {
 #ifdef WITH_CLIENT
-    { "client", "Start a DTLS client (with echo)", client_thread_create },
+    { "client", "Start a DTLS secured client (with echo)", client_thread_create },
 #endif
 #ifdef WITH_SERVER
-	{ "server", "Start a DTLS server listening to port 7777", start_server },
+#ifdef WITH_TINYDTLS
+	{ "server", "Start a DTLS secured CoAP server", server_thread_create },
+#else
+	{ "server", "Start a CoAP server", server_thread_create },
+#endif
 #endif
     { NULL, NULL, NULL }
 };

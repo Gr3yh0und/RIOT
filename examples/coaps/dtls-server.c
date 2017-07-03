@@ -40,11 +40,12 @@ char _server_stack[THREAD_STACKSIZE_MAIN + THREAD_EXTRA_STACKSIZE_PRINTF];
 static kernel_pid_t _dtls_kernel_pid;
 
 /**
- * @brief Main loop of unsecure CoAP server
+ * @brief Main loop of insecure CoAP server
  * @param arg:
  */
 void *server_wrapper(void *arg){
 	msg_t msg;
+	printf("Starting insecure server on port: %d\n", UDP_LOCAL_PORT);
 
 #ifdef WITH_YACOAP
 	printf("Allocating CoAP resources...");
@@ -113,6 +114,7 @@ int server_thread_create(int argc, char **argv)
         return 1;
     }
 
+    // Check if in/secure server thread is started
 #ifdef WITH_TINYDTLS
     dtls_init();
     server.target.pid = thread_create(_server_stack, sizeof(_server_stack),
@@ -202,6 +204,7 @@ void *dtls_server_wrapper(void *arg)
     msg_t _reader_queue[READER_QUEUE_SIZE];
     msg_t msg;
     msg_init_queue(_reader_queue, READER_QUEUE_SIZE);
+    printf("Starting secure server on port: %d\n", UDP_LOCAL_PORT);
 
 #ifdef WITH_YACOAP
 	printf("Allocating CoAP resources...");

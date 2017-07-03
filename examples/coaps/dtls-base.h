@@ -41,7 +41,11 @@
 #endif
 
 // Definition of server ip address and ports
-#define UDP_LOCAL_PORT 		6666
+#ifdef WITH_TINYDTLS
+#define UDP_LOCAL_PORT 		5684
+#else
+#define UDP_LOCAL_PORT 		5683
+#endif
 #define UDP_REMOTE_PORT 	7777
 #define UDP_REMOTE_ADDRESS 	"fd00:dead:beef::1"
 
