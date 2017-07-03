@@ -85,7 +85,7 @@ void *client_thread(void *arg){
 	// Setup client UDP
     printf("Setting up UDP... ");
 	session.size = sizeof(session.addr);
-	session.port = UDP_REMOTE_PORT;
+	session.port = UDP_LOCAL_PORT; // Client only support DTLS here
 	ipv6_addr_from_str(&session.addr, UDP_REMOTE_ADDRESS);
 
 	// Start client UDP connection
@@ -162,7 +162,7 @@ void *client_thread(void *arg){
 }
 
 /**
- * Creation of client thread
+ * @brief: Creation of client thread
  */
 int client_thread_create(int argc, char **argv){
 	thread_create(client_thread_stack, sizeof(client_thread_stack), THREAD_PRIORITY_MAIN, THREAD_CREATE_STACKTEST, client_thread, NULL, "DTLS Client");

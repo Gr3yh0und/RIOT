@@ -33,14 +33,22 @@ dtls_handler_t dtls_callback = {
  */
 int handle_write(struct dtls_context_t *dtls_context, session_t *session, uint8 *data, size_t length)
 {
-	(void) dtls_context;
-	(void) session;
+#ifdef WITH_SERVER
+	MEASUREMENT_DTLS_WRITE_ON;
+#endif
 
 	// Convert remote IP address to string
 	char ipAddress[IPV6_ADDR_MAX_STR_LEN];
 	ipv6_addr_to_str(ipAddress, &session->addr, IPV6_ADDR_MAX_STR_LEN);
 
-	return send_packet(ipAddress, (char*) data, length, session->port);
+	int result = send_packet(ipAddress, (char*) data, length, session->port);
+
+#ifdef WITH_SERVER
+	MEASUREMENT_DTLS_WRITE_OFF;
+#endif
+
+	(void) dtls_context;
+	return result;
 }
 
 /**
@@ -124,6 +132,32 @@ int handle_event(struct dtls_context_t *dtls_context, session_t *session, dtls_a
 
 #if defined(WITH_CLIENT) || defined(WITH_SERVER)
 /**
+ * @brief Handle incoming message for insecure CoAP Server
+ */
+void handle_message(gnrc_pktsnip_t *message, char *addr_str, short unsigned int port)
+{
+#ifdef WITH_YACOAP
+  coap_packet_t requestPacket, responsePacket;
+  uint8_t responseBuffer[DTLS_MAX_BUF];
+  size_t responseBufferLength = sizeof(responseBuffer);
+
+  // Parse received packet for CoAP request
+  if ((coap_parse(message->data, (unsigned int) message->size, &requestPacket)) < COAP_ERR)
+  {
+    // Get data from resources
+    coap_handle_request(resources, &requestPacket, &responsePacket);
+
+    // Build response packet
+    if ((coap_build(&responsePacket, responseBuffer, &responseBufferLength)) < COAP_ERR)
+    {
+      // Send response packet
+      send_packet(addr_str, (char*) responseBuffer, responseBufferLength, port);
+    }
+  }
+#endif // WITH_YACOAP
+}
+
+/**
  * Transmits a packet with given data to a given address/port
  * @param addr_str: Pointer to IP address as character
  * @param data: Pointer to data
@@ -186,8 +220,10 @@ int send_packet(char *peerIpString, char *data, size_t dataLength, unsigned shor
 void read_packet(dtls_context_t *dtls_context, gnrc_pktsnip_t *packet)
 {
 	MEASUREMENT_DTLS_READ_ON;
+#if WITH_SERVER
+	MEASUREMENT_DTLS_TOTAL_ON;
+#endif
 
-	session_t session;
 	char ipAddress[IPV6_ADDR_MAX_STR_LEN];
 	gnrc_pktsnip_t *snippet;
 
@@ -195,7 +231,7 @@ void read_packet(dtls_context_t *dtls_context, gnrc_pktsnip_t *packet)
 	snippet = gnrc_pktsnip_search_type(packet, GNRC_NETTYPE_IPV6);
 	ipv6_hdr_t *ipHeader = (ipv6_hdr_t *)snippet->data;
 	ipv6_addr_to_str(ipAddress, &ipHeader->src, sizeof(ipAddress));
-#ifdef WITH_SERVER
+#ifdef WITH_TINYDTLS
 	dtls_context->app = ipAddress;
 #endif
 
@@ -203,11 +239,14 @@ void read_packet(dtls_context_t *dtls_context, gnrc_pktsnip_t *packet)
 	snippet = gnrc_pktsnip_search_type(packet, GNRC_NETTYPE_UDP);
 	udp_hdr_t *udpHeader = (udp_hdr_t *)snippet->data;
 
+#ifdef WITH_TINYDTLS
 	// Create session object
+	session_t session;
 	dtls_session_init(&session);
 	session.size = sizeof(ipv6_addr_t);
 	session.port = byteorder_ntohs(udpHeader->src_port);
 	ipv6_addr_from_str(&session.addr, ipAddress);
+#endif
 
 	MEASUREMENT_DTLS_READ_OFF;
 
@@ -216,37 +255,11 @@ void read_packet(dtls_context_t *dtls_context, gnrc_pktsnip_t *packet)
 	dtls_handle_message(dtls_context, &session, packet->data, (unsigned int) packet->size);
 #else
 	// Handle insecure CoAP request
-	handle_message(packet, session);
+	handle_message(packet, ipAddress, byteorder_ntohs(udpHeader->src_port));
 #endif
-}
 
-/**
- * @brief Handle incoming message for insecure CoAP Server
- */
-void handle_message(gnrc_pktsnip_t *message, session_t *session)
-{
-#ifdef WITH_YACOAP
-	coap_packet_t requestPacket, responsePacket;
-	uint8_t responseBuffer[DTLS_MAX_BUF];
-	size_t responseBufferLength = sizeof(responseBuffer);
-
-	char addr_str[IPV6_ADDR_MAX_STR_LEN];
-	ipv6_addr_to_str(addr_str, &session->addr, sizeof(addr_str));
-
-	// Parse received packet for CoAP request
-	if ((coap_parse(message->data, (unsigned int) message->size, &requestPacket)) < COAP_ERR)
-	{
-		// Get data from resources
-		coap_handle_request(resources, &requestPacket, &responsePacket);
-
-		// Build response packet
-		if ((coap_build(&responsePacket, responseBuffer, &responseBufferLength)) < COAP_ERR)
-		{
-			// Send response packet
-			printf("Sending response...\n");
-			send_packet(addr_str, (char*) responseBuffer, responseBufferLength, session->port);
-		}
-	}
-#endif // WITH_YACOAP
+#if WITH_SERVER
+	MEASUREMENT_DTLS_TOTAL_OFF;
+#endif
 }
 #endif

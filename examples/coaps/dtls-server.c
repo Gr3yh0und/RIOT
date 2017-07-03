@@ -31,7 +31,6 @@ extern dtls_handler_t dtls_callback;
 #endif
 
 #ifdef WITH_SERVER
-#include "dtls-base.h"
 void *server_wrapper(void *arg);
 
 #define READER_QUEUE_SIZE (8U)
@@ -55,43 +54,10 @@ void *server_wrapper(void *arg){
 
 	while (1) {
 		msg_receive(&msg);
-		MEASUREMENT_DTLS_TOTAL_ON;
-		MEASUREMENT_DTLS_READ_ON;
 		printf("Message received...\n");
-
-#ifdef WITH_YACOAP
-		coap_packet_t requestPacket, responsePacket;
-		uint8_t responseBuffer[DTLS_MAX_BUF];
-		size_t responseBufferLength = sizeof(responseBuffer);
-
-		// Get data from message
-		gnrc_pktsnip_t *message = msg.content.ptr;
-		gnrc_pktsnip_t *snippet;
-
-		// Extract UDP port
-		snippet = gnrc_pktsnip_search_type(message, GNRC_NETTYPE_UDP);
-		udp_hdr_t *udpHeader = (udp_hdr_t *) snippet->data;
-
-		// Extract IP address
-		snippet = gnrc_pktsnip_search_type(message, GNRC_NETTYPE_IPV6);
-		ipv6_hdr_t *hdr = (ipv6_hdr_t *) snippet->data;
-		char addr_str[IPV6_ADDR_MAX_STR_LEN];
-		ipv6_addr_to_str(addr_str, &hdr->src, sizeof(addr_str));
-
-		if ((coap_parse(message->data, (unsigned int) message->size, &requestPacket)) < COAP_ERR)
-		{
-			// Get data from resources
-			coap_handle_request(resources, &requestPacket, &responsePacket);
-
-			// Build response packet
-			if ((coap_build(&responsePacket, responseBuffer, &responseBufferLength)) < COAP_ERR)
-			{
-				// Send response packet
-				printf("Sending response...\n");
-				send_packet(addr_str, (char*) responseBuffer, responseBufferLength, byteorder_ntohs(udpHeader->src_port));
-			}
-		}
-#endif // WITH_YACOAP
+		MEASUREMENT_DTLS_TOTAL_ON;
+		read_packet(NULL, (gnrc_pktsnip_t *)(msg.content.ptr));
+		gnrc_pktbuf_release(msg.content.ptr);
 		MEASUREMENT_DTLS_TOTAL_OFF;
 	}
 }
@@ -226,8 +192,8 @@ void *dtls_server_wrapper(void *arg)
 	// Main Loop: Wait for message, hand it over to DTLS and discard it
     while (1) {
         msg_receive(&msg);
-        MEASUREMENT_DTLS_TOTAL_ON;
         printf("Message received...\n");
+        MEASUREMENT_DTLS_TOTAL_ON;
         read_packet(dtls_context, (gnrc_pktsnip_t *)(msg.content.ptr));
         gnrc_pktbuf_release(msg.content.ptr);
         MEASUREMENT_DTLS_TOTAL_OFF;

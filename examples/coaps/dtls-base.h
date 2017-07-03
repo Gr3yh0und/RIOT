@@ -23,6 +23,8 @@
 #ifdef WITH_TINYDTLS
 #include "dtls.h"
 #include "dtls_debug.h"
+#else
+typedef int dtls_context_t;
 #endif
 
 #ifdef WITH_SERVER
@@ -40,13 +42,12 @@
 #define printf(...)
 #endif
 
-// Definition of server ip address and ports
+// Definition of local and remote server ip addresses and ports
 #ifdef WITH_TINYDTLS
 #define UDP_LOCAL_PORT 		5684
 #else
 #define UDP_LOCAL_PORT 		5683
 #endif
-#define UDP_REMOTE_PORT 	7777
 #define UDP_REMOTE_ADDRESS 	"fd00:dead:beef::1"
 
 // DTLS configuration
@@ -81,7 +82,6 @@ extern coap_resource_t resources[];
 
 // Functions used by secure client and server
 #ifdef WITH_TINYDTLS
-void read_packet(dtls_context_t *ctx, gnrc_pktsnip_t *pkt);
 int handle_write(struct dtls_context_t *ctx, session_t *session, uint8 *data, size_t len);
 int handle_read(struct dtls_context_t *context, session_t *session, uint8 *data, size_t length);
 int handle_event(struct dtls_context_t *ctx, session_t *session, dtls_alert_level_t level, unsigned short code);
@@ -93,6 +93,7 @@ extern int get_psk_info(struct dtls_context_t *ctx,
 #endif // WITH_TINYDTLS
 
 // Function used by insecure server
+void read_packet(dtls_context_t *ctx, gnrc_pktsnip_t *pkt);
 int send_packet(char *peerIpString, char *data, size_t dataLength, unsigned short peerPort);
 
 #endif /* EXAMPLES_COAPS_DTLS_BASE_H_ */
